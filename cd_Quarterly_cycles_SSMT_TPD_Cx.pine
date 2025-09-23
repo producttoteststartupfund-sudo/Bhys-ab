@@ -449,13 +449,7 @@ get_dfr(session, session_name, session_css,show,nn)=>
         box.delete(dn4_ln[1])
 
 //////////////////////////////////////////////////////////////////////////////////////////
-arrtfok   = array.from(
-    (show_candlesmic and tf_ok_mic),
-    (show_candles30  and tf_ok30),
-    (show_candles90  and tf_ok),
-    (show_candlesD   and tf_okD),
-    (show_candlesW   and tf_okW)
-)          
+arrtfok   = array.from((show_candlesmic and tf_ok_mic), (show_candles30  and tf_ok30), (show_candles90  and tf_ok), (show_candlesD   and tf_okD), (show_candlesW   and tf_okW))          
 arrstart  = array.from(0, 0, 0, 0, 0)
 f_start()=>
     for i = 0 to 4
