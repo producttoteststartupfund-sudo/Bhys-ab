@@ -476,11 +476,12 @@ dfrq_txt = '' , dfrq_css = dfrD_clr, dfrq = "", is_dfrq = math.sign(nz(time(tf,'
 dfrW_txt = '' , dfrW_css = dfrW_clr, dfrW = "", is_dfrW = math.sign(nz(time(tf,'0200-0000' , tz))) ///weekly dfr
 
 // Daily cycle (updated)
-// A: 18:00–02:30, M: 02:30–07:00, D: 07:00–11:30, R: 11:30–16:00
+// A: 18:00–02:30, M: 02:30–07:00, D: 07:00–11:30, R: 11:30–16:00, X: 16:00–18:00 (filler)
 sesq_txt = 'Daily A' , sesq_css = daily_clr, txtq = "A", is_sesq = math.sign(nz(time(tf, '1800-0230', tz)))
 sesr_txt = 'Daily M' , sesr_css = daily_clr, txtr = "M", is_sesr = math.sign(nz(time(tf, '0230-0700', tz)))
 sess_txt = 'Daily D' , sess_css = daily_clr, txts = "D", is_sess = math.sign(nz(time(tf, '0700-1130', tz)))
 sest_txt = 'Daily R' , sest_css = daily_clr, txtt = "R", is_sest = math.sign(nz(time(tf, '1130-1600', tz)))
+sesx_txt = 'Daily X' , sesx_css = daily_clr, txtx = "X", is_sesx = math.sign(nz(time(tf, '1600-1800', tz)))
 
 // 90m cycle re-anchored to Daily starts (A/M/D/R + filler X 16:00–18:00)
 // A: 18:00–02:30 => 1800-1930,1930-2100,2100-2230,2230-0000,0000-0130,0130-0230
@@ -624,9 +625,9 @@ arr_sesz  = array.from(sesa_txt,sesb_txt,sesc_txt,sesd_txt,sese_txt,sesf_txt,ses
 val_ses   = array.indexof(arr_ses , 1) 
 
 // Daily arrays/labels
-arr_sesD  = array.from(is_sesq,is_sesr,is_sess,is_sest)
-arr_sesDy = array.from(txtq,txtr,txts,txtt)
-arr_sesDz = array.from(sesq_txt,sesr_txt,sess_txt,sest_txt)
+arr_sesD  = array.from(is_sesq,is_sesr,is_sess,is_sest,is_sesx)
+arr_sesDy = array.from(txtq,txtr,txts,txtt,txtx)
+arr_sesDz = array.from(sesq_txt,sesr_txt,sess_txt,sest_txt,sesx_txt)
 val_sesD  = array.indexof(arr_sesD,1)
 
 // Weekly arrays/labels
