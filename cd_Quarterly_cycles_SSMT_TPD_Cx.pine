@@ -109,7 +109,7 @@ dfrW_clr    = input.color(color.new(color.navy,0), title  = "Weekly DFR & Std. D
 
 // SMT on-chart options
 g6 = "SMT On-Chart"
-show_smt90_chart = input.bool(defval=true, title = "Draw SMT lines on chart (90m)", group = g6)
+show_smt90_chart = input.bool(defval=false, title = "Draw SMT lines on chart (90m)", group = g6)
 smt_bull_color = input.color(color.new(color.teal, 0), title = "Bullish Color", group = g6, inline = "smtclr")
 smt_bear_color = input.color(color.new(color.red, 0), title = "Bearish Color", group = g6, inline = "smtclr")
 smt_line_width = input.int(2, title = "Line Width", minval = 1, maxval = 5, group = g6)
@@ -119,7 +119,7 @@ smt_label_color = input.color(color.black, "Label Color", group=g6)
 smt_label_size = input.string("small", "Label Size", options=["tiny","small","normal","large","huge"], group=g6)
 smt_candle_check = input.bool(true, "Candle Direction Validation", group=g6)
 smt_del_broken = input.bool(false, "Remove Broken SMTs", group=g6)
-show_smtD_chart = input.bool(defval=true, title = "Draw SMT lines on chart (Daily)", group = g6)
+show_smtD_chart = input.bool(defval=false, title = "Draw SMT lines on chart (Daily)", group = g6)
 show_smt30_chart = input.bool(defval=false, title = "Draw SMT lines on chart (30m)", group = g6)
 show_smtMic_chart = input.bool(defval=false, title = "Draw SMT lines on chart (Micro 10m)", group = g6)
 
