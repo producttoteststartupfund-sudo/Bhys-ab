@@ -107,6 +107,10 @@ dfr_clr     = input.color(color.new(color.blue,0), title  = "90m DFR & Std. Dev.
 dfrD_clr    = input.color(color.new(color.black,0), title  = "Daily DFR & Std. Dev. ",inline="dfr3",group="DFR Colors")
 dfrW_clr    = input.color(color.new(color.navy,0), title  = "Weekly DFR & Std. Dev. ",inline="dfr4",group="DFR Colors")
 
+// SMT on-chart options
+g6 = "SMT On-Chart"
+show_smt90_chart = input.bool(defval=true, title = "Draw SMT lines on chart (90m)", group = g6)
+
 
 //Table Location & Size
 i_font     = input.string("tiny", "Box Text size",  options = ["tiny", "small",  "normal", "large", "huge"])
@@ -587,6 +591,8 @@ var lmin = low
 var t0 = time
 var t1 = time
 var txt0 = ""
+var hmax_t = time
+var lmin_t = time
 
 var o030 = open 
 var hmax30 = high
@@ -867,25 +873,37 @@ var arr_ch = array.new_float()
 var arr_cl = array.new_float()
 var arr_co = array.new_float()
 var arr_cc = array.new_float()
+var arr_h_t = array.new_int()
+var arr_l_t = array.new_int()
+var arr_ch_t = array.new_int()
+var arr_cl_t = array.new_int()
 var co0 = open 
 var chmax = high
 var clmin = low
+var chmaxt = time
+var clmint = time
 
 if val_ses != val_ses[1]
     co0   := xo0
     chmax := xh0
     clmin := xl0
+    chmaxt := xt0
+    clmint := xt0
 if val_ses == val_ses[1]
     if xh0 > chmax
         chmax := xh0
+        chmaxt := xt0
     if xl0 < clmin
         clmin := xl0
+        clmint := xt0
 cc0 = xc0
 if val_ses != val_ses[1]
     add_to_array(arr_ch,chmax[1])
     add_to_array(arr_cl,clmin[1])
     add_to_array(arr_co,co0[1])
     add_to_array(arr_cc,cc0[1])     
+    add_to_array(arr_ch_t, chmaxt[1])
+    add_to_array(arr_cl_t, clmint[1])
 /////////////////////////////////////////////daily
 var arr_chD = array.new_float()
 var arr_clD = array.new_float()
@@ -1022,6 +1040,20 @@ if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
     array.set(N_SSMT,1,bear0)    
     array.set(N_SSMT,2,bull1)
     array.set(N_SSMT,3,bull0)
+    // draw on-chart SMT lines when enabled
+    if show_smt90_chart
+        var line ln_bear1 = na
+        var line ln_bear0 = na
+        var line ln_bull1 = na
+        var line ln_bull0 = na
+        if bear1 and array.size(arr_h_t) > 1 and array.size(arr_ch_t) > 1
+            ln_b1 = line.new(array.get(arrstart,2)+bar_index+dx+13, array.get(arr_h,1), array.get(arrstart,2)+bar_index+dx+16, array.get(arr_h,0), extend=extend.none, color=smt_clr, width=2)
+        if bear0
+            ln_b0 = line.new(array.get(arrstart,2)+bar_index+dx+16, array.get(arr_h,0), array.get(arrstart,2)+bar_index+dx+19, hmax, extend=extend.none, color=smt_clr, width=2)
+        if bull1 and array.size(arr_l_t) > 1 and array.size(arr_cl_t) > 1
+            ln_u1 = line.new(array.get(arrstart,2)+bar_index+dx+13, array.get(arr_l,1), array.get(arrstart,2)+bar_index+dx+16, array.get(arr_l,0), extend=extend.none, color=smt_clr, width=2)
+        if bull0
+            ln_u0 = line.new(array.get(arrstart,2)+bar_index+dx+16, array.get(arr_l,0), array.get(arrstart,2)+bar_index+dx+19, lmin, extend=extend.none, color=smt_clr, width=2)
 
 if array.size(arr_hm) > 1 and array.size(arr_chm) > 1 and tf_ok_mic
     [bear1m,bear0m,bull1m,bull0m] = f_ssmt(array.get(arr_hm,1),array.get(arr_hm,0),hmaxm,array.get(arr_lm,1),array.get(arr_lm,0),lminm,
