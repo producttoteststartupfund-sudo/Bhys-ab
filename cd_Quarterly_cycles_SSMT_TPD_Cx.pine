@@ -110,6 +110,10 @@ dfrW_clr    = input.color(color.new(color.navy,0), title  = "Weekly DFR & Std. D
 // SMT on-chart options
 g6 = "SMT On-Chart"
 show_smt90_chart = input.bool(defval=true, title = "Draw SMT lines on chart (90m)", group = g6)
+smt_bull_color = input.color(bull_clr, title = "Bullish Color", group = g6, inline = "smtclr")
+smt_bear_color = input.color(bear_clr, title = "Bearish Color", group = g6, inline = "smtclr")
+smt_line_width = input.int(2, title = "Line Width", minval = 1, maxval = 5, group = g6)
+show_smt_labels = input.bool(true, title = "Show SMT Label", group = g6)
 
 
 //Table Location & Size
@@ -1040,20 +1044,26 @@ if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
     array.set(N_SSMT,1,bear0)    
     array.set(N_SSMT,2,bull1)
     array.set(N_SSMT,3,bull0)
-    // draw on-chart SMT lines when enabled
+    // draw on-chart SMT lines when enabled (use bar_time coordinates)
     if show_smt90_chart
         var line ln_bear1 = na
         var line ln_bear0 = na
         var line ln_bull1 = na
         var line ln_bull0 = na
+        // previous segment SMTs
         if bear1 and array.size(arr_h_t) > 1 and array.size(arr_ch_t) > 1
-            ln_b1 = line.new(array.get(arrstart,2)+bar_index+dx+13, array.get(arr_h,1), array.get(arrstart,2)+bar_index+dx+16, array.get(arr_h,0), extend=extend.none, color=smt_clr, width=2)
-        if bear0
-            ln_b0 = line.new(array.get(arrstart,2)+bar_index+dx+16, array.get(arr_h,0), array.get(arrstart,2)+bar_index+dx+19, hmax, extend=extend.none, color=smt_clr, width=2)
+            ln_bear1 := line.new(array.get(arr_h_t,1), array.get(arr_h,1), array.get(arr_h_t,0), array.get(arr_h,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width)
+            if show_smt_labels
+                label.new(array.get(arr_h_t,0), array.get(arr_h,0), "SMT", xloc=xloc.bar_time, style=label.style_label_down, textcolor=smt_bear_color, color=color.new(color.white,100), size=i_font)
         if bull1 and array.size(arr_l_t) > 1 and array.size(arr_cl_t) > 1
-            ln_u1 = line.new(array.get(arrstart,2)+bar_index+dx+13, array.get(arr_l,1), array.get(arrstart,2)+bar_index+dx+16, array.get(arr_l,0), extend=extend.none, color=smt_clr, width=2)
+            ln_bull1 := line.new(array.get(arr_l_t,1), array.get(arr_l,1), array.get(arr_l_t,0), array.get(arr_l,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width)
+            if show_smt_labels
+                label.new(array.get(arr_l_t,0), array.get(arr_l,0), "SMT", xloc=xloc.bar_time, style=label.style_label_up, textcolor=smt_bull_color, color=color.new(color.white,100), size=i_font)
+        // live segment SMTs
+        if bear0
+            ln_bear0 := line.new(array.get(arr_h_t,0), array.get(arr_h,0), time, hmax, xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width)
         if bull0
-            ln_u0 = line.new(array.get(arrstart,2)+bar_index+dx+16, array.get(arr_l,0), array.get(arrstart,2)+bar_index+dx+19, lmin, extend=extend.none, color=smt_clr, width=2)
+            ln_bull0 := line.new(array.get(arr_l_t,0), array.get(arr_l,0), time, lmin, xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width)
 
 if array.size(arr_hm) > 1 and array.size(arr_chm) > 1 and tf_ok_mic
     [bear1m,bear0m,bull1m,bull0m] = f_ssmt(array.get(arr_hm,1),array.get(arr_hm,0),hmaxm,array.get(arr_lm,1),array.get(arr_lm,0),lminm,
