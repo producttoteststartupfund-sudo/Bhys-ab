@@ -110,8 +110,8 @@ dfrW_clr    = input.color(color.new(color.navy,0), title  = "Weekly DFR & Std. D
 // SMT on-chart options
 g6 = "SMT On-Chart"
 show_smt90_chart = input.bool(defval=true, title = "Draw SMT lines on chart (90m)", group = g6)
-smt_bull_color = input.color(bull_clr, title = "Bullish Color", group = g6, inline = "smtclr")
-smt_bear_color = input.color(bear_clr, title = "Bearish Color", group = g6, inline = "smtclr")
+smt_bull_color = input.color(color.new(color.teal, 0), title = "Bullish Color", group = g6, inline = "smtclr")
+smt_bear_color = input.color(color.new(color.red, 0), title = "Bearish Color", group = g6, inline = "smtclr")
 smt_line_width = input.int(2, title = "Line Width", minval = 1, maxval = 5, group = g6)
 show_smt_labels = input.bool(true, title = "Show SMT Label", group = g6)
 smt_line_style = input.string("Solid", "Line Style", options=["Solid","Dashed","Dotted"], group=g6)
@@ -1071,9 +1071,9 @@ if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
         // live segment SMTs
         bear_ok_live = not smt_candle_check or (close < open)
         bull_ok_live = not smt_candle_check or (close > open)
-        if bear0 and bear_ok_live
+        if bear0 and bear_ok_live and array.size(arr_h_t) > 0
             ln_bear0 := line.new(array.get(arr_h_t,0), array.get(arr_h,0), time, hmax, xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle)
-        if bull0 and bull_ok_live
+        if bull0 and bull_ok_live and array.size(arr_l_t) > 0
             ln_bull0 := line.new(array.get(arr_l_t,0), array.get(arr_l,0), time, lmin, xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle)
 
 if array.size(arr_hm) > 1 and array.size(arr_chm) > 1 and tf_ok_mic
