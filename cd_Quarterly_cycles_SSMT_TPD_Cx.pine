@@ -637,6 +637,9 @@ var t1m = time
 var txt0m = ""
 var int micro_idx = 0
 var bool newm = false
+// Micro 10m SMT time anchors
+var arr_hm_t = array.new_int()
+var arr_lm_t = array.new_int()
 
 // 90m arrays/labels
 arr_ses   = array.from(is_sesa,is_sesb,is_sesc,is_sesd,is_sese,is_sesf,is_sesg,is_sesh,is_sesi,is_sesj,is_sesk,is_sesl,is_sesm,is_sesn,is_seso,is_sesp)
@@ -1013,8 +1016,6 @@ var arr_chm = array.new_float()
 var arr_clm = array.new_float()
 var arr_com = array.new_float()
 var arr_ccm = array.new_float()
-var arr_hm_t = array.new_int()
-var arr_lm_t = array.new_int()
 var co0m = open 
 var chmaxm = high
 var clminm = low
