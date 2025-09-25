@@ -120,8 +120,8 @@ smt_label_size = input.string("small", "Label Size", options=["tiny","small","no
 smt_candle_check = input.bool(true, "Candle Direction Validation", group=g6)
 smt_del_broken = input.bool(false, "Remove Broken SMTs", group=g6)
 show_smtD_chart = input.bool(defval=true, title = "Draw SMT lines on chart (Daily)", group = g6)
-show_smt30_chart = input.bool(defval=true, title = "Draw SMT lines on chart (30m)", group = g6)
-show_smtMic_chart = input.bool(defval=true, title = "Draw SMT lines on chart (Micro 10m)", group = g6)
+show_smt30_chart = input.bool(defval=false, title = "Draw SMT lines on chart (30m)", group = g6)
+show_smtMic_chart = input.bool(defval=false, title = "Draw SMT lines on chart (Micro 10m)", group = g6)
 
 
 //Table Location & Size
@@ -753,15 +753,15 @@ if tf_ok30
         lstyle30 = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
         bear_ok_prev30 = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
         bull_ok_prev30 = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
-        if bear_ok_prev30
+        if bear_ok_prev30 and array.get(arr_h30,1) > array.get(arr_h30,0)
             line.new(array.get(arr_h30_t,1), array.get(arr_h30,1), array.get(arr_h30_t,0), array.get(arr_h30,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle30)
-        if bull_ok_prev30
+        if bull_ok_prev30 and array.get(arr_l30,1) < array.get(arr_l30,0)
             line.new(array.get(arr_l30_t,1), array.get(arr_l30,1), array.get(arr_l30_t,0), array.get(arr_l30,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle30)
         bear_ok_live30 = not smt_candle_check or (close < open)
         bull_ok_live30 = not smt_candle_check or (close > open)
-        if bear_ok_live30
+        if bear_ok_live30 and array.get(arr_h30,0) > hmax30
             line.new(array.get(arr_h30_t,0), array.get(arr_h30,0), time, hmax30, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle30)
-        if bull_ok_live30
+        if bull_ok_live30 and array.get(arr_l30,0) < lmin30
             line.new(array.get(arr_l30_t,0), array.get(arr_l30,0), time, lmin30, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle30)
 
 /////////////////////////////////////////////////////////////////////// daily cycle candles
@@ -893,15 +893,15 @@ if tf_ok_mic
         lstylem = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
         bear_ok_prevm = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
         bull_ok_prevm = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
-        if bear_ok_prevm
+        if bear_ok_prevm and array.get(arr_hm,1) > array.get(arr_hm,0)
             line.new(array.get(arr_hm_t,1), array.get(arr_hm,1), array.get(arr_hm_t,0), array.get(arr_hm,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstylem)
-        if bull_ok_prevm
+        if bull_ok_prevm and array.get(arr_lm,1) < array.get(arr_lm,0)
             line.new(array.get(arr_lm_t,1), array.get(arr_lm,1), array.get(arr_lm_t,0), array.get(arr_lm,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstylem)
         bear_ok_livem = not smt_candle_check or (close < open)
         bull_ok_livem = not smt_candle_check or (close > open)
-        if bear_ok_livem
+        if bear_ok_livem and array.get(arr_hm,0) > hmaxm
             line.new(array.get(arr_hm_t,0), array.get(arr_hm,0), time, hmaxm, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstylem)
-        if bull_ok_livem
+        if bull_ok_livem and array.get(arr_lm,0) < lminm
             line.new(array.get(arr_lm_t,0), array.get(arr_lm,0), time, lminm, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstylem)
 
 //////////////////////////////////////////// SMT 
@@ -1093,15 +1093,15 @@ if array.size(arr_hD) > 1 and array.size(arr_chD) > 1 and tf_okD
         lstyleD = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
         bear_ok_prevD = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
         bull_ok_prevD = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
-        if bear1D and array.size(arr_hD_t) > 1 and bear_ok_prevD
+        if bear1D and array.size(arr_hD_t) > 1 and bear_ok_prevD and array.get(arr_hD,1) > array.get(arr_hD,0)
             line.new(array.get(arr_hD_t,1), array.get(arr_hD,1), array.get(arr_hD_t,0), array.get(arr_hD,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyleD)
-        if bull1D and array.size(arr_lD_t) > 1 and bull_ok_prevD
+        if bull1D and array.size(arr_lD_t) > 1 and bull_ok_prevD and array.get(arr_lD,1) < array.get(arr_lD,0)
             line.new(array.get(arr_lD_t,1), array.get(arr_lD,1), array.get(arr_lD_t,0), array.get(arr_lD,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyleD)
         bear_ok_liveD = not smt_candle_check or (close < open)
         bull_ok_liveD = not smt_candle_check or (close > open)
-        if bear0D and bear_ok_liveD and array.size(arr_hD_t) > 0
+        if bear0D and bear_ok_liveD and array.size(arr_hD_t) > 0 and array.get(arr_hD,0) > hmaxD
             line.new(array.get(arr_hD_t,0), array.get(arr_hD,0), time, hmaxD, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyleD)
-        if bull0D and bull_ok_liveD and array.size(arr_lD_t) > 0
+        if bull0D and bull_ok_liveD and array.size(arr_lD_t) > 0 and array.get(arr_lD,0) < lminD
             line.new(array.get(arr_lD_t,0), array.get(arr_lD,0), time, lminD, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyleD)
 
 if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
@@ -1126,20 +1126,20 @@ if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
         // Optional candle direction validation
         bear_ok_prev = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
         bull_ok_prev = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
-        if bear1 and array.size(arr_h_t) > 1 and array.size(arr_ch_t) > 1 and bear_ok_prev
+        if bear1 and array.size(arr_h_t) > 1 and array.size(arr_ch_t) > 1 and bear_ok_prev and array.get(arr_h,1) > array.get(arr_h,0)
             ln_bear1 := line.new(array.get(arr_h_t,1), array.get(arr_h,1), array.get(arr_h_t,0), array.get(arr_h,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle)
             if show_smt_labels
                 label.new(array.get(arr_h_t,0), array.get(arr_h,0), "SMT", xloc=xloc.bar_time, style=label.style_label_down, textcolor=smt_label_color, color=color.new(color.white,100), size=smt_label_size)
-        if bull1 and array.size(arr_l_t) > 1 and array.size(arr_cl_t) > 1 and bull_ok_prev
+        if bull1 and array.size(arr_l_t) > 1 and array.size(arr_cl_t) > 1 and bull_ok_prev and array.get(arr_l,1) < array.get(arr_l,0)
             ln_bull1 := line.new(array.get(arr_l_t,1), array.get(arr_l,1), array.get(arr_l_t,0), array.get(arr_l,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle)
             if show_smt_labels
                 label.new(array.get(arr_l_t,0), array.get(arr_l,0), "SMT", xloc=xloc.bar_time, style=label.style_label_up, textcolor=smt_label_color, color=color.new(color.white,100), size=smt_label_size)
         // live segment SMTs
         bear_ok_live = not smt_candle_check or (close < open)
         bull_ok_live = not smt_candle_check or (close > open)
-        if bear0 and bear_ok_live and array.size(arr_h_t) > 0
+        if bear0 and bear_ok_live and array.size(arr_h_t) > 0 and array.get(arr_h,0) > hmax
             ln_bear0 := line.new(array.get(arr_h_t,0), array.get(arr_h,0), time, hmax, xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle)
-        if bull0 and bull_ok_live and array.size(arr_l_t) > 0
+        if bull0 and bull_ok_live and array.size(arr_l_t) > 0 and array.get(arr_l,0) < lmin
             ln_bull0 := line.new(array.get(arr_l_t,0), array.get(arr_l,0), time, lmin, xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle)
 
 if array.size(arr_hm) > 1 and array.size(arr_chm) > 1 and tf_ok_mic
