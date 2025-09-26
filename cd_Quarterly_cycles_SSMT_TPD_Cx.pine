@@ -1,0 +1,1411 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+
+//@version=5
+indicator("cd_Quarterly_cycles_SSMT_TPD_Cx",overlay=true,max_lines_count = 300
+  , overlay          = true
+  , max_bars_back    = 500
+  , max_lines_count  = 500
+  , max_boxes_count  = 500
+  , max_labels_count = 500)
+//------------------------------------------------------------------------------
+//Settings
+g1 =" Cycles"
+g2 =" PSP & TPD" 
+g3 =" Alerts"
+g4 ="True Opens"
+g5 = "The Defining Range & Standart Deviations"
+dot_line=" ------------------------------ "
+show_table      = input.bool(defval= true, title= "Show Table",inline="0")
+amd_pot         = input.bool(defval= true, title= "Potantial PO3 analysis on Table",inline="0")
+num_cycle       = input.int(defval = 4 ,title = "Number of cycle boxes to display" , inline="1", minval = 2,maxval=4)
+show_last       = input.bool(defval= false, title= "",inline="1",tooltip = "if passive => all boxes")
+show_rm         = input.bool(defval = true,title = "Show Remaining Time",inline="2")
+
+show_cyclesmic  = input.bool(defval=false,title="Micro Cycle Boxes  (10m)", inline="mic",group  = g1)
+show_candlesmic = input.bool(defval=true,title="Micro Cycle Candles (10m)",inline="mic",group = g1)
+show_labelsmic  = input.bool(defval=true,title="Micro Cycle Labels",inline="mic",group = g1)
+
+show_cycles30   = input.bool(defval=true,title="30m Cycle Boxes", inline="30",group = g1)
+show_candles30  = input.bool(defval=true,title="30m Cycle Candles",inline="30",group = g1)
+show_labels30   = input.bool(defval=true,title="30m Cycle Labels",inline="30",group = g1)
+
+show_cycles90   = input.bool(defval=true,title="90m Cycle Boxes",inline="90",group = g1)
+show_candles90  = input.bool(defval=true,title="90m Cycle Candles",inline="90",group = g1)
+show_labels90   = input.bool(defval=true,title="90m Cycle Labels",inline="90",group = g1)
+
+show_cyclesD    = input.bool(defval=true,title="Daily Cycle Boxes",inline="D",group = g1)
+show_candlesD   = input.bool(defval=true,title="Daily Cycle Candles",inline="D",group = g1)
+show_labelsD    = input.bool(defval=true,title="Daily Cycle Labels",inline="D",group = g1)
+
+show_cyclesW    = input.bool(defval=false,title=  "Weekly Cycle Boxes",inline="W",group = g1)
+show_candlesW   = input.bool(defval=false,title=  "Weekly Cycle Candles",inline="W",group = g1)
+show_labelsW    = input.bool(defval=false,title=  "Weekly Cycle Labels",inline="W",group = g1)
+
+dx              = input.int(defval= 10 ,title = " Start to Cycle Candles from ahead", inline="d",group =g1)
+///////////////////////////////////////////////////////////////////////////////////////////
+show_TWO  = input.bool(defval=true,title=  "True Week Open",inline="0",group = g4)
+show_TDO  = input.bool(defval=true,title=  "True Day Open",inline="0",group = g4)
+show_TSO  = input.bool(defval=true,title=  "True Session Open",inline="0",group = g4)
+show_TMSO = input.bool(defval=true,title=  "True Micro Session Open",inline="0",group = g4)
+//////////////////////////////////////////////////
+show_dfr   = input.bool(defval=true,title=  "90m",inline="1",group = g5)
+show_dfrD  = input.bool(defval=true,title= "Daily",inline="1",group = g5)
+show_dfrW  = input.bool(defval=true,title= "Weekly",inline="1",group = g5)
+//
+tf1ok = input.bool(defval=true,title="",inline= "tf1",group = g2)
+tf2ok = input.bool(defval=true,title="",inline= "tf2",group = g2)
+tf3ok = input.bool(defval=true,title="",inline= "tf3",group = g2)
+tf0ok = input.bool(defval=true,title="Current TF",inline= "tf0",group = g2)
+tf1 = input.timeframe(defval="240",title="Tf1:",inline="tf1",group = g2)
+tf2 = input.timeframe(defval="60",title="Tf2:",inline="tf2",group = g2)
+tf3 = input.timeframe(defval="15",title="Tf3",inline="tf3",group = g2)
+
+//////////////////////////////////////////////////////////
+Wbu = "Weekly Bull SSMT" , Wbe = "Weekly Bear SSMT" 
+Dbu = "Daily Bull SSMT"  , Dbe = "Daily Bear SSMT"
+Nbu = "90m Bull SSMT"    , Nbe = "90m Bear SSMT"
+mbu = "Micro Bull SSMT"  , mbe = "Micro Bear SSMT"
+//////////////////////////////////////////////////
+tf1bu = "Tf1 Bull TPD" , tf1be = "Tf1 Bear TPD"
+tf2bu = "Tf2 Bull TPD" , tf2be = "Tf2 Bear TPD"
+tf3bu = "Tf3 Bull TPD" , tf3be = "Tf3 Bear TPD"
+///////////////////////////////////////////////////
+al1ok = input.bool(defval=true,title="",inline= "al1",group = g3)
+al2ok = input.bool(defval=false,title="",inline= "al2",group = g3)
+al3ok = input.bool(defval=false,title="",inline= "al3",group = g3)
+al4ok = input.bool(defval=false,title="",inline= "al4",group = g3)
+
+al_con1 = input.string(defval= Wbu, title= "Con. 1",options=[Wbu,Wbe,Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al1",group = g3)
+al_con2 = input.string(defval= tf2bu, title= "Con. 2",options=[tf1bu,tf1be,tf2bu,tf2be,tf3bu,tf3be,"none"],inline="al1",group = g3)
+al_con3 = input.string(defval= Dbu, title= "Con. 3",options=[Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al1",group = g3)
+bl_con1 = input.string(defval= "none", title= "Con. 1",options=[Wbu,Wbe,Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al2",group = g3)
+bl_con2 = input.string(defval= "none", title= "Con. 2",options=[tf1bu,tf1be,tf2bu,tf2be,tf3bu,tf3be,"none"],inline="al2",group = g3)
+bl_con3 = input.string(defval= "none", title= "Con. 3",options=[Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al2",group = g3)
+cl_con1 = input.string(defval= "none", title= "Con. 1",options=[Wbu,Wbe,Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al3",group = g3)
+cl_con2 = input.string(defval= "none", title= "Con. 2",options=[tf1bu,tf1be,tf2bu,tf2be,tf3bu,tf3be,"none"],inline="al3",group = g3)
+cl_con3 = input.string(defval= "none", title= "Con. 3",options=[Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al3",group = g3)
+dl_con1 = input.string(defval= "none", title= "Con. 1",options=[Wbu,Wbe,Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al4",group = g3)
+dl_con2 = input.string(defval= "none", title= "Con. 2",options=[tf1bu,tf1be,tf2bu,tf2be,tf3bu,tf3be,"none"],inline="al4",group = g3)
+dl_con3 = input.string(defval= "none", title= "Con. 3",options=[Dbu,Dbe,Nbu,Nbe,mbu,mbe,"none"],inline="al4",group = g3)
+///////////////////////////////////////////////
+
+q1_clr     = input.color(#2962ff, title  = "Q1",inline="clr1",group="Cycle Colors")
+q2_clr     = input.color(#f23645, title  = "Q2",inline="clr1",group="Cycle Colors")
+q3_clr     = input.color(#4caf50, title  = "Q3",inline="clr1",group="Cycle Colors")
+q4_clr     = input.color(#b2b5be, title  = "Q4",inline="clr1",group="Cycle Colors")
+daily_clr  = input.color(#b2b5be, title  = "Daily ",inline="clr1",group="Cycle Colors")
+weekly_clr = input.color(#b2b5be, title  = "Weekly ",inline="clr1",group="Cycle Colors")
+
+bull_clr    = input.color(color.new(color.teal,0), title  = "Bullish",inline="clr1",group="Colors")
+bear_clr    = input.color(color.new(color.red,0),  title  = "Bearish",inline="clr1",group="Colors")
+eq_clr      = input.color(color.new(color.black,50), title  = "Range",inline="clr1",group="Colors")
+brd_clr     = input.color(color.new(color.black,0), title  = "Candles Border",inline="clr1",group="Colors")
+smt_clr     = input.color(color.new(color.purple,0), title  = "SMT",inline="clr1",group="Colors")
+
+topen_clr   = input.color(color.new(color.purple,0), title  = "True Opens",inline="dfr1",group="DFR Colors")
+dfr_clr     = input.color(color.new(color.blue,0), title  = "90m DFR & Std. Dev. ",inline="dfr2",group="DFR Colors")
+dfrD_clr    = input.color(color.new(color.black,0), title  = "Daily DFR & Std. Dev. ",inline="dfr3",group="DFR Colors")
+dfrW_clr    = input.color(color.new(color.navy,0), title  = "Weekly DFR & Std. Dev. ",inline="dfr4",group="DFR Colors")
+
+// SMT on-chart options
+g6 = "SMT On-Chart"
+show_smt90_chart = input.bool(defval=false, title = "Draw SMT lines on chart (90m)", group = g6)
+smt_bull_color = input.color(color.new(color.teal, 0), title = "Bullish Color", group = g6, inline = "smtclr")
+smt_bear_color = input.color(color.new(color.red, 0), title = "Bearish Color", group = g6, inline = "smtclr")
+smt_line_width = input.int(2, title = "Line Width", minval = 1, maxval = 5, group = g6)
+show_smt_labels = input.bool(true, title = "Show SMT Label", group = g6)
+smt_line_style = input.string("Solid", "Line Style", options=["Solid","Dashed","Dotted"], group=g6)
+smt_label_color = input.color(color.black, "Label Color", group=g6)
+smt_label_size = input.string("small", "Label Size", options=["tiny","small","normal","large","huge"], group=g6)
+smt_candle_check = input.bool(true, "Candle Direction Validation", group=g6)
+smt_del_broken = input.bool(false, "Remove Broken SMTs", group=g6)
+show_smtD_chart = input.bool(defval=false, title = "Draw SMT lines on chart (Daily)", group = g6)
+show_smt30_chart = input.bool(defval=false, title = "Draw SMT lines on chart (30m)", group = g6)
+show_smtMic_chart = input.bool(defval=false, title = "Draw SMT lines on chart (Micro 10m)", group = g6)
+
+
+//Table Location & Size
+i_font     = input.string("tiny", "Box Text size",  options = ["tiny", "small",  "normal", "large", "huge"])
+i_pos      = input.string(position.middle_right, "Table Position", inline  = "1", options = [position.middle_right, position.top_right,position.bottom_right,position.bottom_center,position.bottom_left], group = "Table",inline="tbl")
+ii_font     = input.string("tiny", "Table Text size",  options = ["tiny", "small",  "normal", "large", "huge"], group = "Table",inline="tbl")
+
+i_main_clr = color.red
+i_title_clr = color.red
+i_bgcolor  = color.teal
+i_textcolor= color.white
+
+//Correlated pairs
+
+ok1 = input.bool(defval=true,title="",group = "Correlated pairs",inline="s1")
+ok2 = input.bool(defval=true,title="",group = "Correlated pairs",inline="s2")
+ok3 = input.bool(defval=true,title="",group = "Correlated pairs",inline="s3")
+ok4 = input.bool(defval=true,title="",group = "Correlated pairs",inline="s4")
+
+s1=input.symbol(defval = "PEPPERSTONE:NAS100",  title = "1 : " , group = "Correlated pairs",inline="s1")
+s2=input.symbol(defval = "PEPPERSTONE:US500",   title = " & "  , group = "Correlated pairs",inline="s1")
+s3=input.symbol(defval = "PEPPERSTONE:EURUSD",  title = "2 : " , group = "Correlated pairs",inline="s2")
+s4=input.symbol(defval = "PEPPERSTONE:GBPUSD",   title = " & " , group = "Correlated pairs",inline="s2")
+s5=input.symbol(defval = "PEPPERSTONE:XAUUSD",   title = "3 : " , group = "Correlated pairs",inline="s3")
+s6=input.symbol(defval = "PEPPERSTONE:XAGUSD",   title = " & " , group = "Correlated pairs",inline="s3")
+s7=input.symbol(defval = "BINANCE:BTCUSDT.P",   title = "4 : " , group = "Correlated pairs",inline="s4")
+s8=input.symbol(defval = "BINANCE:ETHUSDT.P",   title = " & " , group = "Correlated pairs",inline="s4")
+badj= input.bool(defval = true,title = "B-ADJ: (For only futures)",group="Correlated pairs",inline="s5")
+n = bar_index
+tf = timeframe.period
+sym = syminfo.tickerid
+tipo = syminfo.type
+//-----------------------------------------------------------------------------{
+day_week  = dayofweek(time,'America/New_York')
+num_candles  = 6
+//dx= 10//input(defval= 0 ,title = " Start from ahead") 
+//Timezones
+tz_incr = input.int(-4, 'UTC (+/-)'
+  , group = 'Timezone')
+
+//Ranges Options
+bg_transp = input.float(90, 'Range Transparency'
+  , group = 'Ranges Settings',inline= "rn1")
+
+show_outline = input(true, 'Range Outline'
+  , group = 'Ranges Settings',inline="rn1")
+
+//-----------------------------------------------------------------------------}
+//Functions
+//-----------------------------------------------------------------------------{
+
+tf_ok_mic  = timeframe.in_seconds(tf) <= timeframe.in_seconds("5")
+tf_ok30    = timeframe.in_seconds(tf) <= timeframe.in_seconds("30")
+tf_ok      = timeframe.in_seconds(tf) <= timeframe.in_seconds("30")
+tf_okD     = timeframe.in_seconds(tf) <= timeframe.in_seconds("180")
+tf_okW     = timeframe.in_seconds(tf) <= timeframe.in_seconds("1D")
+var tablo = table.new(position = i_pos,columns = 2,rows = 11,frame_color=color.teal ,frame_width=2,border_color=i_bgcolor ,border_width=1)
+var arr_h = array.new_float()
+var arr_l = array.new_float()
+var arr_o = array.new_float()
+var arr_c = array.new_float()
+var arr_t = array.new_string()
+
+var arr_h30 = array.new_float()
+var arr_l30 = array.new_float()
+var arr_o30 = array.new_float()
+var arr_c30 = array.new_float()
+var arr_t30 = array.new_string()
+var arr_h30_t = array.new_int()
+var arr_l30_t = array.new_int()
+
+var arr_hD = array.new_float()
+var arr_lD = array.new_float()
+var arr_oD = array.new_float()
+var arr_cD = array.new_float()
+var arr_tD = array.new_string()
+
+var arr_hW = array.new_float()
+var arr_lW = array.new_float()
+var arr_oW = array.new_float()
+var arr_cW = array.new_float()
+var arr_tW = array.new_string()
+
+var arr_hm = array.new_float()
+var arr_lm = array.new_float()
+var arr_om = array.new_float()
+var arr_cm = array.new_float()
+var arr_tm = array.new_string()
+
+/////////////////////////////////////
+add_to_array(arr, value) =>
+    array.unshift(arr, value)
+    if array.size(arr) > num_candles -1
+        array.pop(arr)
+f_live_sym(_xc0,_xo0,_xh0,_xl0,_xt0,_tf)=>
+    var _c1 = 0.0, var _o1 = 0.0 , var _h1 = 0.0, var _l1 = 0.0, var _t1 = 0
+    var _c2 = 0.0, var _o2 = 0.0 , var _h2 = 0.0, var _l2 = 0.0, var _t2 = 0 
+    var up0 = false , var up1 = false
+    var dw0 = false , var dw1 = false
+    var _l0t = time , var _h0t = time, var _h1t = time , var _l1t = time   
+    var _o0 = open
+    var _h0 = high
+    var _l0 = low
+    var _t0 = time
+    var _c0 = close
+    if timeframe.change(_tf)
+        _t0 := _xt0
+        _o0 := _xo0
+        _h0 := _xh0
+        _l0 := _xl0
+        
+    if _xh0 >= _h0
+        _h0 := _xh0
+        _h0t := time
+    if _xl0 <= _l0
+        _l0 := _xl0
+        _l0t := time
+    _c0 := _xc0
+    up0 := _c0 > _o0
+    dw0 := _c0 < _o0
+    if timeframe.change(_tf)
+        _c1  :=  _c0[1]
+        _o1  :=  _o0[1]
+        _h1  :=  _h0[1]
+        _l1  :=  _l0[1]
+        _t1  :=  _t0[1]
+        _c2  :=  _c1[1]
+        _o2  :=  _o1[1]
+        _h2  :=  _h1[1]
+        _l2  :=  _l1[1]
+        _t2  :=  _t1[1] 
+        up1  :=  up0[1]
+        dw1  :=  dw0[1]
+        _l1t :=  _l0t[1]
+        _h1t :=  _h0t[1]
+    [_h2,_l2,_c2,_o2,_t2,_h1,_l1,_c1,_o1,_t1,_h0,_l0,_c0,_o0,_t0,up1,dw1,_l1t,_h1t] 
+f_text(string _tf)=>
+    _text = str.tonumber(_tf) < 59 ? _tf + 'm'  :
+     str.tonumber(_tf) > 59  ? 'h'+ str.tostring(math.floor(str.tonumber(_tf)/60))    : _tf
+    _text := _tf == "1D" ? "D" : _tf == "1W" ? "W" : _tf == "1M" ? "M" : _text    
+Getcolor_candle(_o,_c)=>
+    clr = _c > _o ? bull_clr : _o > _c ? bear_clr : eq_clr
+    clr
+f_plot_candle(_c,_o,_h,_l,start,i,txt)=>
+    dxx =dx
+    nn = num_candles
+    m = nn - i
+    bl0=box.new(left=bar_index+start+dxx+ 0 + m * 3  ,top= _c , right= bar_index+start + dxx + 2 + m * 3 , bottom = _o  , bgcolor = Getcolor_candle(_o,_c), border_color = brd_clr , text = txt , text_size = i_font ,text_valign = text.align_center , text_halign = text.align_center ,text_color = color.white)
+    wup=box.new(left=bar_index+start+dxx+ 1 + m * 3  ,top= _h , right= bar_index+start + dxx + 1 + m * 3 , bottom = math.max(_o,_c)  , border_color = brd_clr,border_width =1)
+    wdw=box.new(left=bar_index+start+dxx+ 1 + m * 3  ,top= _l , right= bar_index+start + dxx + 1 + m * 3 , bottom = math.min(_o,_c) , border_color = brd_clr,border_width =1)
+    box.delete(bl0[1])
+    box.delete(wup[1])    
+    box.delete(wdw[1]) 
+///////////////////////////////////////////
+RemainingTime(_TF) =>
+    if barstate.isrealtime
+        timeRemaining = (_TF - timenow) / 1000
+        days = math.floor(timeRemaining / 86400)
+        hours = math.floor((timeRemaining - days * 86400) / 3600)
+        minutes = math.floor((timeRemaining - days * 86400 - hours * 3600) / 60)
+        seconds = math.floor(timeRemaining - days * 86400 - hours * 3600 - minutes * 60)
+
+        r = str.tostring(seconds, '00')
+        if minutes == 0
+            r:= str.tostring(minutes, '00') + ':' + r
+            r
+        if minutes > 0 or hours > 0 or days > 0
+            r := str.tostring(minutes, '00') + ':' + r
+            r
+        if hours > 0 or days > 0
+            r := str.tostring(hours, '00') + ':' + r
+            r
+        if days > 0
+            r := str.tostring(days) + 'D ' + r
+            r
+        r
+
+    else
+        'Market closed' 
+
+var tablo3 = table.new(position = position.bottom_center,columns = 2,rows = 11,frame_color=color.new(color.teal,50),frame_width=2,border_color=color.new(color.teal,50),border_width=1)
+if not str.contains(syminfo.tickerid,"replay")and show_rm
+    table.cell(tablo3,0,0,text="TF: " + RemainingTime(time_close(tf)) ,text_color=color.white,bgcolor= #089981, text_size = i_font)
+
+///////////////////////////////////
+var TWO = open , var TDO = open, TSO = open , var TMSO = open
+var TWOt = time, var TDOt = time, var TSOt = time, var TMSOt = time
+var boxW = array.new_box()
+var boxD = array.new_box()
+var boxN = array.new_box()
+var boxm = array.new_box()
+var lblW = array.new_label()
+var lblD = array.new_label()
+var lblN = array.new_label()
+var lblm = array.new_label()
+get_range(session, session_name, session_css,show,nn)=>
+    var t = 0 
+    var max = high
+    var min = low
+    var box bx = na
+    var label lbl = na 
+    show_txt = show 
+    if session > session[1]
+        t := time
+        max := high
+        min := low
+        bx := box.new(n, max, n, min
+         , bgcolor = color.new(session_css, bg_transp)
+         , border_color = show_outline ? session_css : na
+         , border_style = line.style_dotted)
+        if show_txt
+            lbl := label.new(t, max, session_name
+             , xloc = xloc.bar_time
+             , textcolor = session_css
+             , style = label.style_label_down
+             , color = color.new(color.white, 100)
+             , size = i_font )
+
+        if nn==4 and show_last
+            add_to_array(boxm,bx)
+            add_to_array(lblm,lbl)            
+        if nn==3 and show_last
+            add_to_array(boxN,bx)
+            add_to_array(lblN,lbl)            
+        if nn==2 and show_last
+            add_to_array(boxD,bx)
+            add_to_array(lblD,lbl)            
+        if nn==1 and show_last
+            add_to_array(boxW,bx)
+            add_to_array(lblW,lbl)           
+    if session and session == session[1]
+        max := math.max(high, max)
+        min := math.min(low, min)
+        box.set_top(bx, max)
+        box.set_rightbottom(bx, n, min)
+        if show_txt 
+            label.set_xy(lbl, int(math.avg(t, time)), max)
+
+    if show_last and nn==4 and array.size(boxm) > num_cycle
+        dbox = array.get(boxm,num_cycle)
+        dlbl = array.get(lblm,num_cycle)
+        array.remove(boxm,num_cycle)
+        array.remove(lblm,num_cycle)        
+        box.delete(dbox)
+        label.delete(dlbl) 
+    if show_last and nn==3 and array.size(boxN) > num_cycle
+        dbox = array.get(boxN,num_cycle)
+        dlbl = array.get(lblN,num_cycle)
+        array.remove(boxN,num_cycle)
+        array.remove(lblN,num_cycle)        
+        box.delete(dbox)
+        label.delete(dlbl) 
+    if show_last and nn==2 and array.size(boxD) > num_cycle
+        dbox = array.get(boxD,num_cycle)
+        dlbl = array.get(lblD,num_cycle)
+        array.remove(boxD,num_cycle)
+        array.remove(lblD,num_cycle)        
+        box.delete(dbox)
+        label.delete(dlbl)
+    if show_last and nn==1 and array.size(boxW) > num_cycle
+        dbox = array.get(boxW,num_cycle)
+        dlbl = array.get(lblW,num_cycle)
+        array.remove(boxW,num_cycle)
+        array.remove(lblW,num_cycle)        
+        box.delete(dbox)
+        label.delete(dlbl)  
+get_dfr(session, session_name, session_css,show,nn)=>
+    var t = 0 
+    var max = high
+    var min = low
+    var line bxh = na
+    var line bxl = na
+    var label lbl = na 
+    var box dp1_ln = na, var box dp2_ln = na, var box dp2_5_ln = na, var box dp4_ln = na
+    var box dn1_ln = na, var box dn2_ln = na, var box dn2_5_ln = na, var box dn4_ln = na
+
+    show_txt = show
+            
+    if session > session[1]
+        t := time
+        max := high
+        min := low
+        bxh := line.new(t, max, t, max
+         , xloc  = xloc.bar_time
+         , color = session_css 
+         , style = line.style_dotted
+         , width =2 )
+        bxl := line.new(t, min, t, min
+         , xloc  = xloc.bar_time
+         , color = session_css 
+         , style = line.style_dotted
+         , width = 2 ) 
+
+        if show_txt
+            lbl := label.new(t, max, session_name
+             , xloc = xloc.bar_time
+             , textcolor = session_css
+             , style = label.style_label_down
+             , color = color.new(color.white, 100)
+             , size = i_font )
+
+
+    if session and session == session[1]
+        max := math.max(high, max)
+        min := math.min(low, min)
+        line.set_y1(bxh, max)
+        line.set_y2(bxh, max)
+        line.set_x2(bxh,time)
+        line.set_y1(bxl, min)
+        line.set_y2(bxl, min)
+        line.set_x2(bxl,time)                       
+        if show_txt 
+            label.set_xy(lbl, int(math.avg(t, time)), max)
+            
+        dr  = max - min
+        dp1 = max + dr , dp2 = max + 2 * dr , dp2_5 = max + 2.5 * dr , dp4 = max + 4 * dr       
+        dn1 = min - dr , dn2 = min - 2 * dr , dn2_5 = min - 2.5 * dr , dn4 = min - 4 * dr
+ 
+        dp1_ln := box.new(left= t , top = dp1, right = time, bottom = dp1 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "1", text_color = session_css,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dp1_ln[1])
+        dp2_ln := box.new(left= t , top = dp2, right = time, bottom = dp2 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "2", text_color = session_css,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dp2_ln[1])
+        dp2_5_ln := box.new(left= t , top = dp2_5, right = time, bottom = dp2_5 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "2.5", text_color = session_css,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dp2_5_ln[1])
+        dp4_ln := box.new(left= t , top = dp4, right = time, bottom = dp4 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "4", text_color = session_css,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dp4_ln[1])
+
+        dn1_ln := box.new(left= t , top = dn1, right = time, bottom = dn1 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "-1", text_color = session_css,text_valign = text.align_top,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dn1_ln[1])
+        dn2_ln := box.new(left= t , top = dn2, right = time, bottom = dn2 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "-2", text_color = session_css,text_valign = text.align_top,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dn2_ln[1])
+        dn2_5_ln := box.new(left= t , top = dn2_5, right = time, bottom = dn2_5 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "-2.5", text_color = session_css,text_valign = text.align_top,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dn2_5_ln[1])
+        dn4_ln := box.new(left= t , top = dn4, right = time, bottom = dn4 , xloc=xloc.bar_time, 
+         border_color = session_css,bgcolor = color.new(color.red,100),text = "-4", text_color = session_css,text_valign = text.align_top,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+        box.delete(dn4_ln[1])
+
+//////////////////////////////////////////////////////////////////////////////////////////
+arrtfok   = array.from((show_candlesmic and tf_ok_mic), (show_candles30  and tf_ok30), (show_candles90  and tf_ok), (show_candlesD   and tf_okD), (show_candlesW   and tf_okW))          
+arrstart  = array.from(0, 0, 0, 0, 0)
+f_start()=>
+    for i = 0 to 4
+        array.set(arrstart,i,0)
+    j = 0
+    for i= 0 to 4
+        if array.get(arrtfok,i) == true
+            array.set(arrstart,i,j * 22)
+            j := j + 1
+//-----------------------------------------------------------------------------}
+//Sessions
+//-----------------------------------------------------------------------------{
+
+var tz = str.format('UTC{0}{1}', tz_incr >= 0 ? '+' : '-', math.abs(tz_incr))
+
+// 90m DFR anchors (unchanged)
+dfra_txt = '' , dfra_css = dfr_clr, dfra = "", is_dfra = math.sign(nz(time(tf,'1830-1930' , tz))) ////90m dfr
+dfre_txt = '' , dfre_css = dfr_clr, dfre = "", is_dfre = math.sign(nz(time(tf,'0030-0130' , tz))) 
+dfri_txt = '' , dfri_css = dfr_clr, dfri = "", is_dfri = math.sign(nz(time(tf,'0630-0730' , tz))) 
+dfrm_txt = '' , dfrm_css = dfr_clr, dfrm = "", is_dfrm = math.sign(nz(time(tf,'1230-1330' , tz)))
+
+dfrq_txt = '' , dfrq_css = dfrD_clr, dfrq = "", is_dfrq = math.sign(nz(time(tf,'2000-0000' , tz))) ///daily dfr
+
+dfrW_txt = '' , dfrW_css = dfrW_clr, dfrW = "", is_dfrW = math.sign(nz(time(tf,'0200-0000' , tz))) ///weekly dfr
+
+// Daily cycle (updated)
+// A: 18:00–02:30, M: 02:30–07:00, D: 07:00–11:30, R: 11:30–16:00, X: 16:00–18:00 (filler)
+sesq_txt = 'Daily A' , sesq_css = daily_clr, txtq = "A", is_sesq = math.sign(nz(time(tf, '1800-0230', tz)))
+sesr_txt = 'Daily M' , sesr_css = daily_clr, txtr = "M", is_sesr = math.sign(nz(time(tf, '0230-0700', tz)))
+sess_txt = 'Daily D' , sess_css = daily_clr, txts = "D", is_sess = math.sign(nz(time(tf, '0700-1130', tz)))
+sest_txt = 'Daily R' , sest_css = daily_clr, txtt = "R", is_sest = math.sign(nz(time(tf, '1130-1600', tz)))
+sesx_txt = 'Daily X' , sesx_css = daily_clr, txtx = "X", is_sesx = math.sign(nz(time(tf, '1600-1800', tz)))
+
+// 90m cycle re-anchored to Daily starts (A/M/D/R + filler X 16:00–18:00)
+// A: 18:00–02:30 => 1800-1930,1930-2100,2100-2230,2230-0000,0000-0130,0130-0230
+sesa_txt = 'A-1' , sesa_css = q1_clr, txta = "A", is_sesa = math.sign(nz(time(tf, '1800-1930', tz))) 
+sesb_txt = 'A-2' , sesb_css = q2_clr, txtb = "A", is_sesb = math.sign(nz(time(tf, '1930-2100', tz))) 
+sesc_txt = 'A-3' , sesc_css = q3_clr, txtc = "A", is_sesc = math.sign(nz(time(tf, '2100-2230', tz)))  
+sesd_txt = 'A-4' , sesd_css = q4_clr, txtd = "A", is_sesd = math.sign(nz(time(tf, '2230-0000', tz))) 
+sese_txt = 'A-5' , sese_css = q1_clr, txte = "A", is_sese = math.sign(nz(time(tf, '0000-0130', tz)))
+sesf_txt = 'A-6' , sesf_css = q2_clr, txtf = "A", is_sesf = math.sign(nz(time(tf, '0130-0230', tz)))  
+// M: 02:30–07:00 => 0230-0400,0400-0530,0530-0700
+sesg_txt = 'M-1' , sesg_css = q3_clr, txtg = "M", is_sesg = math.sign(nz(time(tf, '0230-0400', tz))) 
+sesh_txt = 'M-2' , sesh_css = q4_clr, txth = "M", is_sesh = math.sign(nz(time(tf, '0400-0530', tz))) 
+sesi_txt = 'M-3' , sesi_css = q1_clr, txti = "M", is_sesi = math.sign(nz(time(tf, '0530-0700', tz)))  
+// D: 07:00–11:30 => 0700-0830,0830-1000,1000-1130
+sesj_txt = 'D-1' , sesj_css = q2_clr, txtj = "D", is_sesj = math.sign(nz(time(tf, '0700-0830', tz)))  
+sesk_txt = 'D-2' , sesk_css = q3_clr, txtk = "D", is_sesk = math.sign(nz(time(tf, '0830-1000', tz)))  
+sesl_txt = 'D-3' , sesl_css = q4_clr, txtl = "D", is_sesl = math.sign(nz(time(tf, '1000-1130', tz)))  
+// R: 11:30–16:00 => 1130-1300,1300-1430,1430-1600
+sesm_txt = 'R-1' , sesm_css = q1_clr, txtm = "R", is_sesm = math.sign(nz(time(tf, '1130-1300', tz))) 
+sesn_txt = 'R-2' , sesn_css = q2_clr, txtn = "R", is_sesn = math.sign(nz(time(tf, '1300-1430', tz))) 
+seso_txt = 'R-3' , seso_css = q3_clr, txto = "R", is_seso = math.sign(nz(time(tf, '1430-1600', tz))) 
+// Filler X: 16:00–18:00 to keep 16 slots
+sesp_txt = 'X'   , sesp_css = q4_clr, txtp = "X", is_sesp = math.sign(nz(time(tf, '1600-1800', tz))) 
+
+//Weekly cycle
+var trueday = 2
+var newday = false
+if is_sesq[1] == 0 and is_sesq == 1 and newday == false 
+    trueday :=  
+     day_week == 1 ? 2 :  
+     day_week == 2 ? 3 :
+     day_week == 3 ? 4 :
+     day_week == 4 ? 5 :
+     day_week == 5 ? 6 : 
+     day_week == 6 ? 7 : 1 //
+    newday := true
+if (is_sesq[1] == 1 and is_sesq == 1)   
+    newday := false
+
+is_week1 = trueday  == 2 ? 1 : 0//monday
+is_week2 = trueday  == 3 ? 1 : 0
+is_week3 = trueday  == 4 ? 1 : 0
+is_week4 = trueday  == 5 ? 1 : 0
+is_week5 = trueday  == 6 ? 1 : 0
+is_week6 = trueday  == 7 ? 1 : 0
+is_week7 = trueday  == 1 ? 1 : 0//sunday
+//-----------------------------------------------------------------------------}
+//Overlays
+//-----------------------------------------------------------------------------{
+//Ranges
+// Micro cycle boxes previously enumerated are intentionally omitted to prevent object overrun with 10m buckets.
+
+if show_cycles90 and tf_ok 
+    get_range(is_sesa, sesa_txt, sesa_css, show_labels90,3)
+    get_range(is_sesb, sesb_txt, sesb_css, show_labels90,3)
+    get_range(is_sesc, sesc_txt, sesc_css, show_labels90,3)
+    get_range(is_sesd, sesd_txt, sesd_css, show_labels90,3)
+    get_range(is_sese, sese_txt, sese_css, show_labels90,3)
+    get_range(is_sesf, sesf_txt, sesf_css, show_labels90,3)
+    get_range(is_sesg, sesg_txt, sesg_css, show_labels90,3)
+    get_range(is_sesh, sesh_txt, sesh_css, show_labels90,3)
+    get_range(is_sesi, sesi_txt, sesi_css, show_labels90,3)
+    get_range(is_sesj, sesj_txt, sesj_css, show_labels90,3)
+    get_range(is_sesk, sesk_txt, sesk_css, show_labels90,3)
+    get_range(is_sesl, sesl_txt, sesl_css, show_labels90,3)
+    get_range(is_sesm, sesm_txt, sesm_css, show_labels90,3)
+    get_range(is_sesn, sesn_txt, sesn_css, show_labels90,3)
+    get_range(is_seso, seso_txt, seso_css, show_labels90,3)
+    get_range(is_sesp, sesp_txt, sesp_css, show_labels90,3)
+
+if show_dfr and tf_ok
+    get_dfr(is_dfra, dfra_txt, dfra_css, show_dfr,3)
+    get_dfr(is_dfre, dfre_txt, dfre_css, show_dfr,3)
+    get_dfr(is_dfri, dfri_txt, dfri_css, show_dfr,3)
+    get_dfr(is_dfrm, dfrm_txt, dfrm_css, show_dfr,3)            
+////daily cycle
+if show_cyclesD and tf_okD
+    get_range(is_sesq, sesq_txt, daily_clr, show_labelsD,2)
+    get_range(is_sesr, sesr_txt, daily_clr, show_labelsD,2)
+    get_range(is_sess, sess_txt, daily_clr, show_labelsD,2)
+    get_range(is_sest, sest_txt, daily_clr, show_labelsD,2)
+if show_dfrD and tf_okD
+    get_dfr(is_dfrq, dfrq_txt, dfrq_css, show_dfrD,2)
+
+if show_dfrW and tf_okW and is_week1
+    get_dfr(is_dfrW, dfrW_txt, dfrW_css, show_dfrW,1)
+  
+/////weekly cycle
+if show_cyclesW and tf_okW 
+    get_range(is_week1, "Weekly A -Monday-", weekly_clr, show_labelsW,1)    
+    get_range(is_week2, "Weekly M -Tueday-", weekly_clr, show_labelsW,1)
+    get_range(is_week3, "Weekly D -Wednesday-", weekly_clr, show_labelsW,1)
+    get_range(is_week4, "Weekly R -Thursday-", weekly_clr, show_labelsW,1)
+    get_range(is_week5, "Weekly x -Friday-", color.new(weekly_clr,50), show_labelsW,1)
+    if tipo == "crypto"
+        get_range(is_week6, "Weekly x -Saturday-", color.new(weekly_clr,50), show_labelsW,1)  
+        get_range(is_week7, "Weekly x -Sunday-", color.new(weekly_clr,50), show_labelsW,1)       
+//////////////////////////////////////////// SMT begin
+
+var o0 = open 
+var hmax = high
+var lmin = low
+var t0 = time
+var t1 = time
+var txt0 = ""
+var hmax_t = time
+var lmin_t = time
+
+var o030 = open 
+var hmax30 = high
+var lmin30 = low
+var t030 = time
+var t130 = time
+var txt030 = ""
+
+var o0D = open 
+var hmaxD = high
+var lminD = low
+var t0D = time
+var t1D = time
+var txt0D = ""
+
+var o0W = open 
+var hmaxW = high
+var lminW = low
+var t0W = time
+var t1W = time
+var txt0W = ""
+
+var o0m = open 
+var hmaxm = high
+var lminm = low
+var t0m = time
+var t1m = time
+var txt0m = ""
+var int micro_idx = 0
+var bool newm = false
+// Micro 10m SMT time anchors
+var arr_hm_t = array.new_int()
+var arr_lm_t = array.new_int()
+
+// 90m arrays/labels
+arr_ses   = array.from(is_sesa,is_sesb,is_sesc,is_sesd,is_sese,is_sesf,is_sesg,is_sesh,is_sesi,is_sesj,is_sesk,is_sesl,is_sesm,is_sesn,is_seso,is_sesp)
+arr_sesy  = array.from(txta,txtb,txtc,txtd,txte,txtf,txtg,txth,txti,txtj,txtk,txtl,txtm,txtn,txto,txtp)
+arr_sesz  = array.from(sesa_txt,sesb_txt,sesc_txt,sesd_txt,sese_txt,sesf_txt,sesg_txt,sesh_txt,sesi_txt,sesj_txt,sesk_txt,sesl_txt,sesm_txt,sesn_txt,seso_txt,sesp_txt) 
+val_ses   = array.indexof(arr_ses , 1) 
+
+// Daily arrays/labels
+arr_sesD  = array.from(is_sesq,is_sesr,is_sess,is_sest,is_sesx)
+arr_sesDy = array.from(txtq,txtr,txts,txtt,txtx)
+arr_sesDz = array.from(sesq_txt,sesr_txt,sess_txt,sest_txt,sesx_txt)
+val_sesD  = array.indexof(arr_sesD,1)
+
+// Weekly arrays/labels
+arr_sesW  = array.from(is_week1,is_week2,is_week3,is_week4,is_week5,is_week6,is_week7)
+arr_sesWy = array.from("A","M","D","R","Fr","Sat","Sun")
+arr_sesWz = array.from("Weekly A","Weekly B","Weekly C","Weekly D","Weekly x","Weekly x","Weekly x")
+val_sesW  = array.indexof(arr_sesW,1)
+
+newW = val_sesW != val_sesW[1]
+newD = val_sesD != val_sesD[1]
+newN = val_ses  !=  val_ses[1]
+
+// Start positions for columns
+f_start()
+cycle_highs = array.from(array.max(arr_hW),array.max(arr_hD),array.max(arr_h),array.max(arr_hm),array.max(arr_h30))
+labels_high = array.max(cycle_highs)
+
+//////////////////////////////////////////////// 90m candles
+if tf_ok
+    if val_ses != val_ses[1]
+        o0 := open
+        hmax := high
+        lmin := low
+        t0 := time
+
+    if val_ses == val_ses[1]
+        if high > hmax
+            hmax := high
+        if low < lmin
+            lmin := low
+    c0 = close
+    txt0 := array.get(arr_sesy,val_ses)
+    txtz = array.get(arr_sesz,val_ses)
+    if val_ses != val_ses[1]
+        add_to_array(arr_h,hmax[1])//hmax1
+        add_to_array(arr_l,lmin[1])        
+        add_to_array(arr_o,o0[1])
+        add_to_array(arr_c,close[1])
+        add_to_array(arr_t,txt0[1])
+        t1 := t0[1]
+
+    dt  =  t0 +(t0 - t1) 
+    rmt  = RemainingTime(dt)
+    rmttxt=  not str.contains(syminfo.tickerid,"replay") ? rmt : "replay mode"
+    st90 = array.get(arrstart,2)
+    if show_candles90 and tf_ok   
+        f_plot_candle(c0,o0,hmax,lmin,st90,0,txt0)
+    if array.size(arr_h) == num_candles-1 and show_candles90 and tf_ok
+        f_plot_candle(array.get(arr_c,0 ),array.get(arr_o,0 ),array.get(arr_h,0 ),array.get(arr_l,0 ),st90,1,array.get(arr_t,0 ))
+        f_plot_candle(array.get(arr_c,1 ),array.get(arr_o,1 ),array.get(arr_h,1 ),array.get(arr_l,1 ),st90,2,array.get(arr_t,1 ))
+        f_plot_candle(array.get(arr_c,2 ),array.get(arr_o,2 ),array.get(arr_h,2 ),array.get(arr_l,2 ),st90,3,array.get(arr_t,2 ))
+        f_plot_candle(array.get(arr_c,3 ),array.get(arr_o,3 ),array.get(arr_h,3 ),array.get(arr_l,3 ),st90,4,array.get(arr_t,3 ))
+        f_plot_candle(array.get(arr_c,4 ),array.get(arr_o,4 ),array.get(arr_h,4 ),array.get(arr_l,4 ),st90,5,array.get(arr_t,4 ))
+        lbl0 = label.new(bar_index+dx+st90+12,labels_high + 6 * ta.atr(20)  , text= "90m cycle"+'\n'+str.tostring(txtz)+'\n'+str.tostring(rmttxt),xloc=xloc.bar_index,color=color.new(color.teal,0),style=label.style_label_center,textcolor = color.white,size=i_font)
+        label.delete(lbl0[1])
+
+//////////////////////////////////////////////// 30m candles (anchored to A/M/D/R)
+thirty_in   = is_sesq or is_sesr or is_sess or is_sest
+thirty_tick = tf_ok30 and thirty_in and timeframe.change("30")
+txt030      := is_sesq ? "A" : is_sesr ? "M" : is_sess ? "D" : is_sest ? "R" : "X"
+if tf_ok30
+    if thirty_tick
+        o030   := open
+        hmax30 := high
+        lmin30 := low
+        t030   := time
+        // finalize previous
+        add_to_array(arr_h30,hmax30[1])
+        add_to_array(arr_l30,lmin30[1])        
+        add_to_array(arr_o30,o030[1])
+        add_to_array(arr_c30,close[1])
+        add_to_array(arr_t30,txt030[1])
+        add_to_array(arr_h30_t,t030[1])
+        add_to_array(arr_l30_t,t030[1])
+        t130 := t030[1]
+    else
+        if high > hmax30
+            hmax30 := high
+        if low < lmin30
+            lmin30 := low
+
+    c030   = close
+    dt30   = t030 + (t030 - t130)
+    rmt30  = RemainingTime(dt30)
+    rmttxt30= not str.contains(syminfo.tickerid,"replay") ? rmt30 : "replay mode"
+    st30   = array.get(arrstart,1)
+
+    if show_candles30 and tf_ok30
+        f_plot_candle(c030,o030,hmax30,lmin30,st30,0,txt030)
+    if array.size(arr_h30) == num_candles-1 and show_candles30 and tf_ok30
+        f_plot_candle(array.get(arr_c30,0 ),array.get(arr_o30,0 ),array.get(arr_h30,0 ),array.get(arr_l30,0 ),st30,1,array.get(arr_t30,0 ))
+        f_plot_candle(array.get(arr_c30,1 ),array.get(arr_o30,1 ),array.get(arr_h30,1 ),array.get(arr_l30,1 ),st30,2,array.get(arr_t30,1 ))
+        f_plot_candle(array.get(arr_c30,2 ),array.get(arr_o30,2 ),array.get(arr_h30,2 ),array.get(arr_l30,2 ),st30,3,array.get(arr_t30,2 ))
+        f_plot_candle(array.get(arr_c30,3 ),array.get(arr_o30,3 ),array.get(arr_h30,3 ),array.get(arr_l30,3 ),st30,4,array.get(arr_t30,3 ))
+        f_plot_candle(array.get(arr_c30,4 ),array.get(arr_o30,4 ),array.get(arr_h30,4 ),array.get(arr_l30,4 ),st30,5,array.get(arr_t30,4 ))
+        lbl30 = label.new(bar_index+dx+st30+12,labels_high + 6 * ta.atr(20), text= "30m cycle"+'\n'+txt030+'\n'+rmttxt30,xloc=xloc.bar_index,color=color.new(color.teal,0),style=label.style_label_center,textcolor = color.white,size=i_font)
+        label.delete(lbl30[1])
+    // on-chart 30m SMT lines
+    if show_smt30_chart and array.size(arr_h30) > 1 and array.size(arr_h30_t) > 1
+        lstyle30 = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
+        bear_ok_prev30 = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
+        bull_ok_prev30 = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
+        if bear_ok_prev30 and array.get(arr_h30,1) > array.get(arr_h30,0)
+            line.new(array.get(arr_h30_t,1), array.get(arr_h30,1), array.get(arr_h30_t,0), array.get(arr_h30,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle30)
+        if bull_ok_prev30 and array.get(arr_l30,1) < array.get(arr_l30,0)
+            line.new(array.get(arr_l30_t,1), array.get(arr_l30,1), array.get(arr_l30_t,0), array.get(arr_l30,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle30)
+        bear_ok_live30 = not smt_candle_check or (close < open)
+        bull_ok_live30 = not smt_candle_check or (close > open)
+        if bear_ok_live30 and array.get(arr_h30,0) > hmax30
+            line.new(array.get(arr_h30_t,0), array.get(arr_h30,0), time, hmax30, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle30)
+        if bull_ok_live30 and array.get(arr_l30,0) < lmin30
+            line.new(array.get(arr_l30_t,0), array.get(arr_l30,0), time, lmin30, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle30)
+
+/////////////////////////////////////////////////////////////////////// daily cycle candles
+if tf_okD
+    if val_sesD != val_sesD[1]
+        o0D   := open
+        hmaxD := high
+        lminD := low
+        t0D   := time
+    if val_sesD == val_sesD[1]
+        if high > hmaxD
+            hmaxD := high
+        if low < lminD
+            lminD := low
+    c0D = close
+    txt0D := array.get(arr_sesDy,val_sesD)
+    txtzD = array.get(arr_sesDz,val_sesD)
+    if val_sesD != val_sesD[1]
+        add_to_array(arr_hD,hmaxD[1])
+        add_to_array(arr_lD,lminD[1])        
+        add_to_array(arr_oD,o0D[1])
+        add_to_array(arr_cD,close[1])
+        add_to_array(arr_tD,txt0D[1]) 
+        t1D := t0D[1]
+    if newD and txt0D == "M" and txt0D[1] == "A"
+        TDO := o0D 
+        TDOt:= time       
+    dtD  =  t0D +(t0D - t1D) 
+    rmtD  = RemainingTime(dtD)
+    rmttxtD=  not str.contains(syminfo.tickerid,"replay") ? rmtD : "replay mode"
+    stD = array.get(arrstart,3)
+    if show_candlesD  and tf_okD  
+        f_plot_candle(c0D,o0D,hmaxD,lminD,stD,0,txt0D)
+    if array.size(arr_hD) == num_candles-1 and show_candlesD and tf_okD
+        f_plot_candle(array.get(arr_cD,0 ),array.get(arr_oD,0 ),array.get(arr_hD,0 ),array.get(arr_lD,0 ),stD,1,array.get(arr_tD,0 ))
+        f_plot_candle(array.get(arr_cD,1 ),array.get(arr_oD,1 ),array.get(arr_hD,1 ),array.get(arr_lD,1 ),stD,2,array.get(arr_tD,1 ))
+        f_plot_candle(array.get(arr_cD,2 ),array.get(arr_oD,2 ),array.get(arr_hD,2 ),array.get(arr_lD,2 ),stD,3,array.get(arr_tD,2 ))
+        f_plot_candle(array.get(arr_cD,3 ),array.get(arr_oD,3 ),array.get(arr_hD,3 ),array.get(arr_lD,3 ),stD,4,array.get(arr_tD,3 ))
+        f_plot_candle(array.get(arr_cD,4 ),array.get(arr_oD,4 ),array.get(arr_hD,4 ),array.get(arr_lD,4 ),stD,5,array.get(arr_tD,4 ))
+        lbl1 = label.new(bar_index+dx+stD+12,labels_high + 6 * ta.atr(20)  , text= "Daily cycle"+'\n'+str.tostring(txtzD)+'\n'+str.tostring(rmttxtD),xloc=xloc.bar_index,color=color.new(color.teal,0),style=label.style_label_center,textcolor = color.white,size=i_font)
+        label.delete(lbl1[1])
+
+//////////////////////////////////weekly cycle
+
+if tf_okW 
+    if val_sesW != val_sesW[1]
+        o0W   := open
+        hmaxW := high
+        lminW := low
+        t0W   := time
+    if val_sesW == val_sesW[1]
+        if high > hmaxW
+            hmaxW := high
+        if low < lminW
+            lminW := low
+    c0W = close
+    txt0W := array.get(arr_sesWy,val_sesW)
+    txtzW = array.get(arr_sesWz,val_sesW)
+    if val_sesW != val_sesW[1]
+        add_to_array(arr_hW,hmaxW[1])
+        add_to_array(arr_lW,lminW[1])        
+        add_to_array(arr_oW,o0W[1])
+        add_to_array(arr_cW,close[1])
+        add_to_array(arr_tW,txt0W[1]) 
+        t1W := t0W[1]
+    if newW and txt0W == "M" and txt0W[1] == "A"
+        TWO  := o0W
+        TWOt := time       
+    dtW  =  t0W +(t0W - t1W) 
+    rmtW  = RemainingTime(dtW)
+    rmttxtW=  not str.contains(syminfo.tickerid,"replay") ? rmtW : "replay mode"
+    stW = array.get(arrstart,4)
+    if show_candlesW and tf_okW   
+        f_plot_candle(c0W,o0W,hmaxW,lminW,stW,0,txt0W)
+    if array.size(arr_hW) == num_candles-1 and show_candlesW and tf_okW 
+        f_plot_candle(array.get(arr_cW,0 ),array.get(arr_oW,0 ),array.get(arr_hW,0 ),array.get(arr_lW,0 ),stW,1,array.get(arr_tW,0 ))
+        f_plot_candle(array.get(arr_cW,1 ),array.get(arr_oW,1 ),array.get(arr_hW,1 ),array.get(arr_lW,1 ),stW,2,array.get(arr_tW,1 ))
+        f_plot_candle(array.get(arr_cW,2 ),array.get(arr_oW,2 ),array.get(arr_hW,2 ),array.get(arr_lW,2 ),stW,3,array.get(arr_tW,2 ))
+        f_plot_candle(array.get(arr_cW,3 ),array.get(arr_oW,3 ),array.get(arr_hW,3 ),array.get(arr_lW,3 ),stW,4,array.get(arr_tW,3 ))
+        f_plot_candle(array.get(arr_cW,4 ),array.get(arr_oW,4 ),array.get(arr_hW,4 ),array.get(arr_lW,4 ),stW,5,array.get(arr_tW,4 ))
+        lbl2 = label.new(bar_index+dx+stW+12,labels_high + 6 * ta.atr(20)  , text= "Weekly cycle"+'\n'+str.tostring(txtzW)+'\n'+str.tostring(rmttxtW),xloc=xloc.bar_index,color=color.new(color.teal,0),style=label.style_label_center,textcolor = color.white,size=i_font)
+        label.delete(lbl2[1])
+
+//////////////////////////////////Micro cycle (10-minute buckets aligned to A/M/D/R)
+micro_in = is_sesq or is_sesr or is_sess or is_sest
+micro_part = is_sesq ? "A" : is_sesr ? "M" : is_sess ? "D" : is_sest ? "R" : "X"
+micro_tick = tf_ok_mic and micro_in and timeframe.change("10")
+
+if tf_ok_mic
+    if micro_tick
+        o0m   := open
+        hmaxm := high
+        lminm := low
+        t0m   := time
+        // finalize previous
+        add_to_array(arr_hm,hmaxm[1])
+        add_to_array(arr_lm,lminm[1])        
+        add_to_array(arr_om,o0m[1])
+        add_to_array(arr_cm,close[1])
+        add_to_array(arr_tm,micro_part[1]) 
+        t1m := t0m[1]
+        micro_idx += 1
+    else
+        if high > hmaxm
+            hmaxm := high
+        if low < lminm
+            lminm := low
+
+    c0m = close
+    txt0m := micro_part
+    txtzm = "Micro "+micro_part
+
+    dtm  =  t0m +(t0m - t1m) 
+    rmtm  = RemainingTime(dtm)
+    rmttxtm=  not str.contains(syminfo.tickerid,"replay") ? rmtm : "replay mode"
+    stm = array.get(arrstart,0)
+    if show_candlesmic and tf_ok_mic   
+        f_plot_candle(c0m,o0m,hmaxm,lminm,stm,0,txt0m)
+    if array.size(arr_hm) == num_candles-1 and show_candlesmic and tf_ok_mic
+        f_plot_candle(array.get(arr_cm,0 ),array.get(arr_om,0 ),array.get(arr_hm,0 ),array.get(arr_lm,0 ),stm,1,array.get(arr_tm,0 ))
+        f_plot_candle(array.get(arr_cm,1 ),array.get(arr_om,1 ),array.get(arr_hm,1 ),array.get(arr_lm,1 ),stm,2,array.get(arr_tm,1 ))
+        f_plot_candle(array.get(arr_cm,2 ),array.get(arr_om,2 ),array.get(arr_hm,2 ),array.get(arr_lm,2 ),stm,3,array.get(arr_tm,2 ))
+        f_plot_candle(array.get(arr_cm,3 ),array.get(arr_om,3 ),array.get(arr_hm,3 ),array.get(arr_lm,3 ),stm,4,array.get(arr_tm,3 ))
+        f_plot_candle(array.get(arr_cm,4 ),array.get(arr_om,4 ),array.get(arr_hm,4 ),array.get(arr_lm,4 ),stm,5,array.get(arr_tm,4 ))
+        lbl3 = label.new(bar_index+dx+stm+12,labels_high + 6 * ta.atr(20)  , text= "Micro cycle"+'\n'+str.tostring(txtzm)+'\n'+str.tostring(rmttxtm),xloc=xloc.bar_index,color=color.new(color.teal,0),style=label.style_label_center,textcolor = color.white,size=i_font)
+        label.delete(lbl3[1])
+    // on-chart Micro (10m) SMT lines
+    if show_smtMic_chart and array.size(arr_hm) > 1 and array.size(arr_hm_t) > 1
+        lstylem = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
+        bear_ok_prevm = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
+        bull_ok_prevm = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
+        if bear_ok_prevm and array.get(arr_hm,1) > array.get(arr_hm,0)
+            line.new(array.get(arr_hm_t,1), array.get(arr_hm,1), array.get(arr_hm_t,0), array.get(arr_hm,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstylem)
+        if bull_ok_prevm and array.get(arr_lm,1) < array.get(arr_lm,0)
+            line.new(array.get(arr_lm_t,1), array.get(arr_lm,1), array.get(arr_lm_t,0), array.get(arr_lm,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstylem)
+        bear_ok_livem = not smt_candle_check or (close < open)
+        bull_ok_livem = not smt_candle_check or (close > open)
+        if bear_ok_livem and array.get(arr_hm,0) > hmaxm
+            line.new(array.get(arr_hm_t,0), array.get(arr_hm,0), time, hmaxm, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstylem)
+        if bull_ok_livem and array.get(arr_lm,0) < lminm
+            line.new(array.get(arr_lm_t,0), array.get(arr_lm,0), time, lminm, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstylem)
+
+//////////////////////////////////////////// SMT 
+csym   = sym
+csym  := str.contains(sym,s1) and ok1 ? s2 : str.contains(sym,s2)and ok2 ? s1 : csym
+csym  := str.contains(sym,s3) and ok2 ? s4 : str.contains(sym,s4)and ok2 ? s3 : csym
+csym  := str.contains(sym,s5) and ok3 ? s6 : str.contains(sym,s6)and ok3 ? s5 : csym
+csym  := str.contains(sym,s7) and ok4 ? s8 : str.contains(sym,s8)and ok4 ? s7 : csym 
+csym  := syminfo.type == "futures" ? (ticker.modify(csym,session = syminfo.session,backadjustment=badj ? backadjustment.on:backadjustment.off) ) :csym //new
+
+par_ok = csym != sym
+[xc0,xo0,xh0,xl0,xt0]=request.security(csym,tf,[close,open,high,low,time],lookahead = barmerge.lookahead_on,ignore_invalid_symbol = true)
+ssmt_pair  = str.tostring(syminfo.ticker(csym)) 
+ssmt_label = 'SSMT --> '+ ssmt_pair +'\n'
+ssmt_label := ssmt_label + dot_line + '\n'
+////////////////////////////////////////////////////90m cycle high/low 
+var arr_ch = array.new_float()
+var arr_cl = array.new_float()
+var arr_co = array.new_float()
+var arr_cc = array.new_float()
+var arr_h_t = array.new_int()
+var arr_l_t = array.new_int()
+var arr_ch_t = array.new_int()
+var arr_cl_t = array.new_int()
+var co0 = open 
+var chmax = high
+var clmin = low
+var chmaxt = time
+var clmint = time
+
+if val_ses != val_ses[1]
+    co0   := xo0
+    chmax := xh0
+    clmin := xl0
+    chmaxt := xt0
+    clmint := xt0
+if val_ses == val_ses[1]
+    if xh0 > chmax
+        chmax := xh0
+        chmaxt := xt0
+    if xl0 < clmin
+        clmin := xl0
+        clmint := xt0
+cc0 = xc0
+if val_ses != val_ses[1]
+    add_to_array(arr_ch,chmax[1])
+    add_to_array(arr_cl,clmin[1])
+    add_to_array(arr_co,co0[1])
+    add_to_array(arr_cc,cc0[1])     
+    add_to_array(arr_ch_t, chmaxt[1])
+    add_to_array(arr_cl_t, clmint[1])
+/////////////////////////////////////////////daily
+var arr_chD = array.new_float()
+var arr_clD = array.new_float()
+var arr_coD = array.new_float()
+var arr_ccD = array.new_float()
+var arr_hD_t = array.new_int()
+var arr_lD_t = array.new_int()
+var co0D = open 
+var chmaxD = high
+var clminD = low
+var chmaxD_t = time
+var clminD_t = time
+
+if val_sesD != val_sesD[1]
+    co0D   := xo0
+    chmaxD := xh0
+    clminD := xl0
+    chmaxD_t := xt0
+    clminD_t := xt0
+if val_sesD == val_sesD[1]
+    if xh0 > chmaxD
+        chmaxD := xh0
+        chmaxD_t := xt0
+    if xl0 < clminD
+        clminD := xl0
+        clminD_t := xt0
+cc0D = xc0
+if val_sesD != val_sesD[1]
+    add_to_array(arr_chD,chmaxD[1])
+    add_to_array(arr_clD,clminD[1])
+    add_to_array(arr_coD,co0D[1])
+    add_to_array(arr_ccD,cc0D[1]) 
+    add_to_array(arr_hD_t,chmaxD_t[1])
+    add_to_array(arr_lD_t,clminD_t[1])
+ /////////////////////////////////////////////
+var arr_chW = array.new_float()
+var arr_clW = array.new_float()
+var arr_coW = array.new_float()
+var arr_ccW = array.new_float()
+var co0W = open 
+var chmaxW = high
+var clminW = low
+
+if val_sesW != val_sesW[1] 
+    co0W   := xo0
+    chmaxW := xh0
+    clminW := xl0
+if val_sesW == val_sesW[1]
+    if xh0 > chmaxW
+        chmaxW := xh0
+    if xl0 < clminW
+        clminW := xl0
+cc0W = xc0
+if val_sesW != val_sesW[1]
+    add_to_array(arr_chW,chmaxW[1])
+    add_to_array(arr_clW,clminW[1])
+    add_to_array(arr_coW,co0W[1])
+    add_to_array(arr_ccW,cc0W[1])  
+ /////////////////////////////////////////////
+var arr_chm = array.new_float()
+var arr_clm = array.new_float()
+var arr_com = array.new_float()
+var arr_ccm = array.new_float()
+var co0m = open 
+var chmaxm = high
+var clminm = low
+
+if micro_tick
+    co0m   := xo0
+    chmaxm := xh0
+    clminm := xl0
+else
+    if xh0 > chmaxm
+        chmaxm := xh0
+    if xl0 < clminm
+        clminm := xl0
+cc0m = xc0
+if micro_tick
+    add_to_array(arr_chm,chmaxm[1])
+    add_to_array(arr_clm,clminm[1])
+    add_to_array(arr_com,co0m[1])
+    add_to_array(arr_ccm,cc0m[1]) 
+    add_to_array(arr_hm_t,chmaxt[1])
+    add_to_array(arr_lm_t,clmint[1])
+/////////////////////////////////////////////////////////////////////////////SMT 
+f_ssmt(ah2,ah1,ah0,al2,al1,al0,bh2,bh1,bh0,bl2,bl1,bl0,start,show)=>
+    _bear1 = ((ah2 > ah1 and bh2 <= bh1) or (ah2 <= ah1 and bh2 > bh1) ) and not(ah2 == ah1 and bh2 == bh1) 
+    _bear0 = ((ah1 > ah0 and bh1 <= bh0) or (ah1 <= ah0 and bh1 > bh0) ) and not(ah1 == ah0 and bh1 == bh0) 
+    _bull1 = ((al2 < al1 and bl2 >= bl1) or (al2 >= al1 and bl2 < bl1) ) and not(al2 == al1 and bl2 == bl1) 
+    _bull0 = ((al1 < al0 and bl1 >= bl0) or (al1 >= al0 and bl1 < bl0) ) and not(al1 == al0 and bl1 == bl0)
+    var smth1 = line.new(na,na,na,na)
+    var smth0 = line.new(na,na,na,na)
+    var smtl1 = line.new(na,na,na,na)
+    var smtl0 = line.new(na,na,na,na)
+    line.delete(smth1)
+    line.delete(smth0)
+    line.delete(smtl1)
+    line.delete(smtl0)
+
+    if _bear1 and show
+        smth1 := line.new(bar_index+start+dx+13,ah2,bar_index+start+dx+16,ah1,color=smt_clr,width = 2)
+    if _bear0 and show
+        smth0 := line.new(bar_index+start+dx+16,ah1,bar_index+start+dx+19,ah0,color=smt_clr,width = 2)
+    if _bull1 and show
+        smtl1 := line.new(bar_index+start+dx+13,al2,bar_index+start+dx+16,al1,color=smt_clr,width = 2)
+    if _bull0 and show
+        smtl0 := line.new(bar_index+start+dx+16,al1,bar_index+start+dx+19,al0,color=smt_clr,width = 2)
+    [_bear1,_bear0,_bull1,_bull0]
+////////////////////////////////////////////////////////////////
+W_SSMT = array.from(false,false,false,false)
+D_SSMT = array.from(false,false,false,false)
+N_SSMT = array.from(false,false,false,false)
+m_SSMT = array.from(false,false,false,false)
+if array.size(arr_hW) > 1 and array.size(arr_chW) > 1 and tf_okW 
+    [bear1W,bear0W,bull1W,bull0W] = f_ssmt(array.get(arr_hW,1),array.get(arr_hW,0),hmaxW,array.get(arr_lW,1),array.get(arr_lW,0),lminW,
+     array.get(arr_chW,1),array.get(arr_chW,0),chmaxW,array.get(arr_clW,1),array.get(arr_clW,0),clminW,array.get(arrstart,4),show_candlesW)//
+    ssmt_label := bear1W ? ssmt_label + "Prev. Weekly Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull1W ? ssmt_label + "Prev. Weekly Cycles Bullish SSMT" + '\n' : ssmt_label
+    ssmt_label := bear0W ? ssmt_label + "Live Weekly Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull0W ? ssmt_label + "Live Weekly Cycles Bullish SSMT" + '\n' : ssmt_label
+    array.set(W_SSMT,0,bear1W)
+    array.set(W_SSMT,1,bear0W)    
+    array.set(W_SSMT,2,bull1W)
+    array.set(W_SSMT,3,bull0W) 
+
+if array.size(arr_hD) > 1 and array.size(arr_chD) > 1 and tf_okD
+    [bear1D,bear0D,bull1D,bull0D] = f_ssmt(array.get(arr_hD,1),array.get(arr_hD,0),hmaxD,array.get(arr_lD,1),array.get(arr_lD,0),lminD,
+     array.get(arr_chD,1),array.get(arr_chD,0),chmaxD,array.get(arr_clD,1),array.get(arr_clD,0),clminD,array.get(arrstart,3),show_candlesD)//
+    ssmt_label := bear1D ? ssmt_label + "Prev. Daily Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull1D ? ssmt_label + "Prev. Daily Cycles Bullish SSMT" + '\n' : ssmt_label
+    ssmt_label := bear0D ? ssmt_label + "Live Daily Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull0D ? ssmt_label + "Live Daily Cycles Bullish SSMT" + '\n' : ssmt_label
+    array.set(D_SSMT,0,bear1D)
+    array.set(D_SSMT,1,bear0D)    
+    array.set(D_SSMT,2,bull1D)
+    array.set(D_SSMT,3,bull0D)
+    if show_smtD_chart
+        lstyleD = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
+        bear_ok_prevD = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
+        bull_ok_prevD = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
+        if bear1D and array.size(arr_hD_t) > 1 and bear_ok_prevD and array.get(arr_hD,1) > array.get(arr_hD,0)
+            line.new(array.get(arr_hD_t,1), array.get(arr_hD,1), array.get(arr_hD_t,0), array.get(arr_hD,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyleD)
+        if bull1D and array.size(arr_lD_t) > 1 and bull_ok_prevD and array.get(arr_lD,1) < array.get(arr_lD,0)
+            line.new(array.get(arr_lD_t,1), array.get(arr_lD,1), array.get(arr_lD_t,0), array.get(arr_lD,0), xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyleD)
+        bear_ok_liveD = not smt_candle_check or (close < open)
+        bull_ok_liveD = not smt_candle_check or (close > open)
+        if bear0D and bear_ok_liveD and array.size(arr_hD_t) > 0 and array.get(arr_hD,0) > hmaxD
+            line.new(array.get(arr_hD_t,0), array.get(arr_hD,0), time, hmaxD, xloc=xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyleD)
+        if bull0D and bull_ok_liveD and array.size(arr_lD_t) > 0 and array.get(arr_lD,0) < lminD
+            line.new(array.get(arr_lD_t,0), array.get(arr_lD,0), time, lminD, xloc=xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyleD)
+
+if array.size(arr_h) > 1 and array.size(arr_ch) > 1 and tf_ok
+    [bear1,bear0,bull1,bull0] = f_ssmt(array.get(arr_h,1),array.get(arr_h,0),hmax,array.get(arr_l,1),array.get(arr_l,0),lmin,
+     array.get(arr_ch,1),array.get(arr_ch,0),chmax,array.get(arr_cl,1),array.get(arr_cl,0),clmin,array.get(arrstart,2),show_candles90)//
+    ssmt_label := bear1 ? ssmt_label + "Prev. 90m Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull1 ? ssmt_label + "Prev. 90m Cycles Bullish SSMT" + '\n' : ssmt_label
+    ssmt_label := bear0 ? ssmt_label + "Live 90m Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull0 ? ssmt_label + "Live 90m Cycles Bullish SSMT" + '\n' : ssmt_label
+    array.set(N_SSMT,0,bear1)
+    array.set(N_SSMT,1,bear0)    
+    array.set(N_SSMT,2,bull1)
+    array.set(N_SSMT,3,bull0)
+    // draw on-chart SMT lines when enabled (use bar_time coordinates)
+    if show_smt90_chart
+        var line ln_bear1 = na
+        var line ln_bear0 = na
+        var line ln_bull1 = na
+        var line ln_bull0 = na
+        // previous segment SMTs
+        lstyle = smt_line_style == "Solid" ? line.style_solid : smt_line_style == "Dashed" ? line.style_dashed : line.style_dotted
+        // Optional candle direction validation
+        bear_ok_prev = not smt_candle_check or (high[1] >= high[2] and high >= high[1])
+        bull_ok_prev = not smt_candle_check or (low[1] <= low[2] and low <= low[1])
+        if bear1 and array.size(arr_h_t) > 1 and array.size(arr_ch_t) > 1 and bear_ok_prev and array.get(arr_h,1) > array.get(arr_h,0)
+            ln_bear1 := line.new(array.get(arr_h_t,1), array.get(arr_h,1), array.get(arr_h_t,0), array.get(arr_h,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle)
+            if show_smt_labels
+                label.new(array.get(arr_h_t,0), array.get(arr_h,0), "SMT", xloc=xloc.bar_time, style=label.style_label_down, textcolor=smt_label_color, color=color.new(color.white,100), size=smt_label_size)
+        if bull1 and array.size(arr_l_t) > 1 and array.size(arr_cl_t) > 1 and bull_ok_prev and array.get(arr_l,1) < array.get(arr_l,0)
+            ln_bull1 := line.new(array.get(arr_l_t,1), array.get(arr_l,1), array.get(arr_l_t,0), array.get(arr_l,0), xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle)
+            if show_smt_labels
+                label.new(array.get(arr_l_t,0), array.get(arr_l,0), "SMT", xloc=xloc.bar_time, style=label.style_label_up, textcolor=smt_label_color, color=color.new(color.white,100), size=smt_label_size)
+        // live segment SMTs
+        bear_ok_live = not smt_candle_check or (close < open)
+        bull_ok_live = not smt_candle_check or (close > open)
+        if bear0 and bear_ok_live and array.size(arr_h_t) > 0 and array.get(arr_h,0) > hmax
+            ln_bear0 := line.new(array.get(arr_h_t,0), array.get(arr_h,0), time, hmax, xloc = xloc.bar_time, extend=extend.none, color=smt_bear_color, width=smt_line_width, style=lstyle)
+        if bull0 and bull_ok_live and array.size(arr_l_t) > 0 and array.get(arr_l,0) < lmin
+            ln_bull0 := line.new(array.get(arr_l_t,0), array.get(arr_l,0), time, lmin, xloc = xloc.bar_time, extend=extend.none, color=smt_bull_color, width=smt_line_width, style=lstyle)
+
+if array.size(arr_hm) > 1 and array.size(arr_chm) > 1 and tf_ok_mic
+    [bear1m,bear0m,bull1m,bull0m] = f_ssmt(array.get(arr_hm,1),array.get(arr_hm,0),hmaxm,array.get(arr_lm,1),array.get(arr_lm,0),lminm,
+     array.get(arr_chm,1),array.get(arr_chm,0),chmaxm,array.get(arr_clm,1),array.get(arr_clm,0),clminm,array.get(arrstart,0),show_candlesmic)//
+    ssmt_label := bear1m ? ssmt_label + "Prev. Micro Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull1m ? ssmt_label + "Prev. Micro Cycles Bullish SSMT" + '\n' : ssmt_label
+    ssmt_label := bear0m ? ssmt_label + "Live Micro Cycles Bearish SSMT" + '\n' : ssmt_label
+    ssmt_label := bull0m ? ssmt_label + "Live Micro Cycles Bullish SSMT" + '\n' : ssmt_label
+    array.set(m_SSMT,0,bear1m)
+    array.set(m_SSMT,1,bear0m)    
+    array.set(m_SSMT,2,bull1m)
+    array.set(m_SSMT,3,bull0m)
+f_psp_tpd(_htf,ok)=>
+    if timeframe.in_seconds(tf) <= timeframe.in_seconds(_htf)//m-> main, o-> other
+        var lblbull = label.new(na,na)
+        var lblbear = label.new(na,na)
+        [mh2,ml2,mc2,mo2,mt2,mh1,ml1,mc1,mo1,mt1,mh0,ml0,mc0,mo0,mt0,mup1,mdw1,ml1t,mh1t]=f_live_sym(close,open,high,low,time,_htf)
+        [oh2,ol2,oc2,oo2,ot2,oh1,ol1,oc1,oo1,ot1,oh0,ol0,oc0,oo0,ot0,oup1,odw1,ol1t,oh1t]=f_live_sym(xc0,xo0,xh0,xl0,xt0,_htf)                 
+        ups = array.from(mup1,oup1)
+        dws = array.from(mdw1,odw1)
+
+        lws0 = array.from(ml2,ml1,ml0) 
+        lws1 = array.from(ol2,ol1,ol0)
+        con_lws0 = array.min(lws0) == ml1
+        con_lws1 = array.min(lws1) == ol1
+   
+        con_lowx = array.from(con_lws0, con_lws1)
+        con_low  = array.some(con_lowx)
+
+        hgh0 = array.from(mh2,mh1,mh0) 
+        hgh1 = array.from(oh2,oh1,oh0)
+
+        con_hgh0 = array.max(hgh0) == mh1
+        con_hgh1 = array.max(hgh1) == oh1
+
+        con_hghx = array.from(con_hgh0, con_hgh1)
+        con_hgh  = array.some(con_hghx)
+
+        arr_tpd = array.from(mc2 > mo0 , oc2 > oo0)
+        tpd     = not array.every(arr_tpd) and array.some(arr_tpd)
+
+        psp = not array.every(ups) and not array.every(dws)
+
+        bear_tpd = psp and con_hgh and tpd
+        bull_tpd = psp and con_low and tpd
+        if bear_tpd and ok > 0
+            lblbear := label.new(mh1t, mh1,text=f_text(_htf)+ '\n' +"🚦", xloc=xloc.bar_time,yloc=yloc.abovebar,color=color.new(color.gray,100),size= i_font,textcolor = color.navy)
+            label.delete(lblbear[1])
+        if bull_tpd and ok > 0
+            lblbull := label.new(ml1t, ml1,text="🚦"+ '\n'+ f_text(_htf) , xloc=xloc.bar_time,yloc=yloc.belowbar,color=color.new(color.gray,100),size= i_font,textcolor = color.navy)
+            label.delete(lblbull[1])
+        [psp , bull_tpd,bear_tpd]
+// ⚖ ,🚦
+
+ssmt_label := ssmt_label + dot_line + '\n'
+ssmt_label := ssmt_label + " PSP & TPD " + '\n' 
+ssmt_label := ssmt_label + dot_line + '\n'
+TF1_TPD=array.from(false,false)
+TF2_TPD=array.from(false,false)
+TF3_TPD=array.from(false,false)
+
+if tf1ok and timeframe.in_seconds(tf) <= timeframe.in_seconds(tf1)
+    [tf1_psp,tf1_bull_tpd,tf1_bear_tpd] = f_psp_tpd(tf1,1) 
+    ssmt_label := tf1_bear_tpd ? ssmt_label + f_text(tf1)+ " Bearish TPD🚦 " + '\n' : ssmt_label
+    ssmt_label := tf1_bull_tpd ? ssmt_label + f_text(tf1)+ " Bullish TPD🚦 " + '\n' : ssmt_label    
+    array.set(TF1_TPD,0,tf1_bull_tpd)
+    array.set(TF1_TPD,1,tf1_bear_tpd)
+
+if tf2ok and timeframe.in_seconds(tf) <= timeframe.in_seconds(tf2)
+    [tf2_psp,tf2_bull_tpd,tf2_bear_tpd] = f_psp_tpd(tf2,1)
+    ssmt_label := tf2_bear_tpd ? ssmt_label + f_text(tf2)+  " Bearish TPD🚦 " + '\n' : ssmt_label
+    ssmt_label := tf2_bull_tpd ? ssmt_label + f_text(tf2)+  " Bullish TPD🚦 " + '\n' : ssmt_label 
+    array.set(TF2_TPD,0,tf2_bull_tpd)
+    array.set(TF2_TPD,1,tf2_bear_tpd)       
+if tf3ok and timeframe.in_seconds(tf) <= timeframe.in_seconds(tf3)
+    [tf3_psp,tf3_bull_tpd,tf3_bear_tpd] = f_psp_tpd(tf3,1)
+    ssmt_label := tf3_bear_tpd ? ssmt_label + f_text(tf3)+ " Bearish TPD🚦 " + '\n' : ssmt_label
+    ssmt_label := tf3_bull_tpd ? ssmt_label + f_text(tf3)+ " Bullish TPD🚦 " + '\n' : ssmt_label
+    array.set(TF3_TPD,0,tf3_bull_tpd)
+    array.set(TF3_TPD,1,tf3_bear_tpd)
+if tf0ok 
+    [tf0_psp,tf0_bull_tpd,tf0_bear_tpd] = f_psp_tpd(tf,0) 
+    if tf0_bull_tpd and (low[1] == lmin or low[1] == lminD or low[1] == lminW) and low > low[1]
+        lb0bull = label.new(time[1], low[1],text="X" , xloc=xloc.bar_time,yloc=yloc.belowbar,color=color.new(color.gray,100),size= size.tiny,textcolor = bull_clr)
+    if tf0_bear_tpd and (high[1] == hmax or high[1] == hmaxD or high[1] == hmaxW) and high < high[1]
+        lb0bear = label.new(time[1], low[1],text="X" , xloc=xloc.bar_time,yloc=yloc.abovebar,color=color.new(color.gray,100),size= size.tiny,textcolor = bear_clr)
+///////////////////////////////////////////////////////////////Alerts
+f_alert(a_con1,a_con2,a_con3,number)=>
+    var bull_alert_trigger = false
+    var bear_alert_trigger = false
+
+    bull_control_con1 =
+     a_con1 == Wbu ? array.get(W_SSMT,3) : 
+     a_con1 == Dbu ? array.get(D_SSMT,3) : 
+     a_con1 == Nbu ? array.get(N_SSMT,3) :
+     a_con1 == mbu ? array.get(m_SSMT,3) :
+     a_con1 == "none" ? true : false   
+    bear_control_con1 =
+     a_con1 == Wbe ? array.get(W_SSMT,1) : 
+     a_con1 == Dbe ? array.get(D_SSMT,1) : 
+     a_con1 == Nbe ? array.get(N_SSMT,1) :
+     a_con1 == mbe ? array.get(m_SSMT,1) :
+     a_con1 == "none" ? true : false 
+
+    bull_control_con2 =
+     a_con2 == tf1bu ? array.get(TF1_TPD,0) : 
+     a_con2 == tf2bu ? array.get(TF2_TPD,0) : 
+     a_con2 == tf3bu ? array.get(TF3_TPD,0) :
+     a_con2 == "none"  ? true : false   
+ 
+    bear_control_con2 =
+     a_con2 == tf1be ? array.get(TF1_TPD,1) : 
+     a_con2 == tf2be ? array.get(TF2_TPD,1) : 
+     a_con2 == tf3be ? array.get(TF3_TPD,1) :
+     a_con2 == "none"  ? true : false 
+
+    bull_control_con3 =
+     a_con3 == Dbu ? array.get(D_SSMT,3) : 
+     a_con3 == Nbu ? array.get(N_SSMT,3) :
+     a_con3 == mbu  ? array.get(m_SSMT,3) :
+     a_con3 == "none" ? true : false   
+    bear_control_con3 =
+     a_con3 == Dbe  ? array.get(D_SSMT,1) : 
+     a_con3 == Nbe  ? array.get(N_SSMT,1) :
+     a_con3 == mbe  ? array.get(m_SSMT,1) :
+     a_con3 == "none" ? true : false
+
+    bull_alert = bull_control_con1 and bull_control_con2 and bull_control_con3 and not (a_con1 == "none" and a_con2 == "none" and a_con3 == "none") 
+    if bull_alert and bull_alert_trigger == false
+        alert(number+" Bullish Selection Active ",alert.freq_once_per_bar_close)
+        bull_alert_trigger := true
+    bear_alert = bear_control_con1 and bear_control_con2 and bear_control_con3 and not (a_con1 == "none" and a_con2 == "none" and a_con3 == "none") 
+    if bear_alert and bear_alert_trigger == false
+        alert(number+" Bearish Selection Active ",alert.freq_once_per_bar_close)
+    bear_alert_trigger := true
+    ssmt_lbl  = dot_line + '\n'
+    ssmt_lbl := ssmt_lbl + " Alerts " + '\n' 
+    ssmt_lbl := ssmt_lbl + dot_line + '\n'        
+    ssmt_lbl := bull_alert ? ssmt_lbl + number+ " Bullish Selection Active "  + '\n' : ssmt_lbl    
+    ssmt_lbl := bear_alert ? ssmt_lbl + number+ " Bearish Selection Active "  + '\n' : ssmt_lbl 
+
+    if bull_alert[1] and bull_alert == false
+        bull_alert_trigger := false
+    if bear_alert[1] and bear_alert == false
+        bear_alert_trigger := false 
+    if show_table
+        table.cell(tablo,0,2,text=str.tostring(ssmt_lbl) ,text_color=i_textcolor,bgcolor= i_bgcolor, text_size = ii_font)
+ 
+///////////////////////////////////////////////////////////////////potantial AMD analysis
+if amd_pot and show_table
+    ssmt_label := ssmt_label + dot_line + '\n'
+    ssmt_label := ssmt_label + " Potantial AMD " + '\n' 
+    ssmt_label := ssmt_label + dot_line + '\n'
+    if array.size(arr_hW) > 0 and val_sesW == val_sesW[1] 
+        bear_amdW = hmaxW > array.get(arr_hW,0) and (txt0W == "M" or txt0W == "D") and close[1] < array.get(arr_hW,0)  and tf_okW
+        ssmt_label := amd_pot and bear_amdW ? ssmt_label + "Weekly Bearish AMD "  + '\n' : ssmt_label 
+        bull_amdW = lminW < array.get(arr_lW,0) and (txt0W == "M" or txt0W == "D") and close[1] > array.get(arr_lW,0)  and tf_okW
+        ssmt_label := amd_pot and bull_amdW ? ssmt_label + "Weekly Bullish AMD "  + '\n' : ssmt_label 
+    if array.size(arr_hD) > 0 and val_sesD == val_sesD[1]
+        bear_amdD = hmaxD > array.get(arr_hD,0) and (txt0D == "M" or txt0D == "D") and close[1] < array.get(arr_hD,0)  and tf_okD
+        ssmt_label := amd_pot and bear_amdD ? ssmt_label + "Daily Bearish AMD "  + '\n' : ssmt_label 
+        bull_amdD = lminD < array.get(arr_lD,0) and (txt0D == "M" or txt0D == "D") and close[1] > array.get(arr_lD,0)  and tf_okD
+        ssmt_label := amd_pot and bull_amdD ? ssmt_label + "Daily Bullish AMD "  + '\n' : ssmt_label 
+    if array.size(arr_h) > 0 and val_ses == val_ses[1]
+        bear_amd = hmax > array.get(arr_h,0) and (txt0 == "M" or txt0 == "D") and close[1] < array.get(arr_h,0)  and tf_ok
+        ssmt_label := amd_pot and bear_amd ? ssmt_label + "90m Bearish AMD "  + '\n' : ssmt_label 
+        bull_amd = lmin < array.get(arr_l,0) and (txt0 == "M" or txt0 == "D") and close[1] > array.get(arr_l,0)  and tf_ok
+        ssmt_label := amd_pot and bull_amd ? ssmt_label + "90m Bullish AMD "  + '\n' : ssmt_label 
+    if array.size(arr_hm) > 0 and not micro_tick
+        bear_amdm = hmaxm > array.get(arr_hm,0) and (txt0m == "M" or txt0m == "D") and close[1] < array.get(arr_hm,0)  and tf_ok_mic
+        ssmt_label := amd_pot and bear_amdm ? ssmt_label + "Micro Bearish AMD "  + '\n' : ssmt_label 
+        bull_amdm = lminm < array.get(arr_lm,0) and (txt0m == "M" or txt0m == "D") and close[1] > array.get(arr_lm,0)  and tf_ok_mic
+        ssmt_label := amd_pot and bull_amdm ? ssmt_label + "Micro Bullish AMD "  + '\n' : ssmt_label 
+
+if al1ok
+    f_alert(al_con1,al_con2,al_con3,"1")
+if al2ok
+    f_alert(bl_con1,bl_con2,bl_con3,"2")
+if al3ok
+    f_alert(cl_con1,cl_con2,cl_con3,"3")
+if al4ok
+    f_alert(dl_con1,dl_con2,dl_con3,"4")
+
+if show_table
+    table.cell(tablo,0,0,text="cd_Quarter cycles & SSMT &TPD_Cx",text_color=i_textcolor,bgcolor= i_main_clr, text_size = ii_font)
+    table.cell(tablo,0,1,text=str.tostring(ssmt_label) ,text_color=i_textcolor,bgcolor= i_bgcolor, text_size = ii_font)
+
+//////////////////True open plot
+dt = timeframe.in_seconds(tf) * 1000
+if newN and txt0 == "M" and txt0[1] == "A"
+    TSO := o0
+    TSOt:= time
+if not (newN and txt0 == "M" and txt0[1] == "A")
+    TSO  := TSO[1]
+    TSOt := TSOt[1]
+if tf_ok and show_TSO
+    tso_line = box.new(left= TSOt , top = TSO, right = time+5*dt, bottom = TSO , xloc=xloc.bar_time, 
+     border_color = topen_clr,bgcolor = color.new(color.red,100),text = "TSO", text_color = topen_clr,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+    box.delete(tso_line[1])
+
+if newD and txt0D == "M" and txt0D[1] == "A"
+    TDO := o0D
+    TDOt:= time
+if not (newD and txt0D == "M" and txt0D[1] == "A")
+    TDO  := TDO[1]
+    TDOt := TDOt[1]
+if tf_okD and show_TDO
+    tdo_line = box.new(left= TDOt , top = TDO, right = time+5*dt, bottom = TDO , xloc=xloc.bar_time, 
+     border_color = topen_clr,bgcolor = color.new(color.red,100),text = "TDO", text_color = topen_clr,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+    box.delete(tdo_line[1])
+
+if newW and txt0W == "M" and txt0W[1] == "A"
+    TWO := o0W
+    TWOt:= time
+if not (newW and txt0W == "M" and txt0W[1] == "A")
+    TWO  := TWO[1]
+    TWOt := TWOt[1]
+if tf_okW and show_TWO and not(tipo!="crypto")
+    two_line = box.new(left= TWOt , top = TWO, right = time+5*dt, bottom = TWO , xloc=xloc.bar_time, 
+     border_color = topen_clr,bgcolor = color.new(color.red,100),text = "TWO", text_color = topen_clr,text_valign = text.align_top,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+    box.delete(two_line[1])
+
+newm := micro_tick
+if micro_tick and txt0m == "M" and txt0m[1] == "A"
+    TMSO  := o0m
+    TMSOt := time
+if not (micro_tick and txt0m == "M" and txt0m[1] == "A")
+    TMSO  := TMSO[1]
+    TMSOt := TMSOt[1]
+if tf_ok_mic and show_TMSO
+    tmo_line = box.new(left= TMSOt , top = TMSO, right = time+5*dt, bottom = TMSO , xloc=xloc.bar_time, 
+     border_color = topen_clr,bgcolor = color.new(color.red,100),text = "TMSO", text_color = topen_clr,text_valign = text.align_bottom,text_halign = text.align_right,text_size = size.tiny,border_style = line.style_dotted)
+    box.delete(tmo_line[1])
+
+lbl2 =  dot_line + '\n'
+lbl2 := lbl2 + "Cycles"+ '\n' 
+lbl2 :=  lbl2 + dot_line + '\n'
+lbl2 := tf_okW ? lbl2 + "W => " + txt0W + '\n' : lbl2
+lbl2 := tf_okD ? lbl2 + "D => " + txt0D + '\n' : lbl2 
+lbl2 := tf_ok  ? lbl2 + "90m => " + txt0 + '\n' : lbl2
+lbl2 := tf_ok30 ? lbl2 + "30m => " + txt030 + '\n' : lbl2
+lbl2 := tf_ok_mic ?lbl2 + "Mic. => " + txt0m  : lbl2
+
+var tclr = color.white
+var ttext =""
+dtt = timeframe.in_seconds(tf)
+var qt = time 
+if timeframe.change(tf)
+    qt := time
+if barstate.isrealtime
+    krmt = (time_close(tf) - timenow) /1000
+    if  krmt > 3 * dtt/4
+        tclr := q1_clr
+        ttext :="A"
+    else if krmt > dtt /2
+        tclr := q2_clr
+        ttext := "M"
+    else if krmt > dtt /4
+        tclr := q3_clr
+        ttext := "D"
+    else
+        tclr := q4_clr
+        ttext := "X"
+last =str.tostring(txt0W) + "-" + str.tostring(txt0D) + "-"+str.tostring(txt0)+"-"+str.tostring(txt030)+"-"+str.tostring(txt0m)+"-"+ttext
+if show_table
+    table.cell(tablo,0,3,text= lbl2 ,text_color=i_textcolor,bgcolor= i_bgcolor, text_size = ii_font)
+    table.cell(tablo,0,4,text= "Current Bar :" + ttext ,text_color=i_textcolor,bgcolor= tclr, text_size = ii_font)
+
